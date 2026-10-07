@@ -1,0 +1,15 @@
+{
+  "description": "Dias con videotutoria de Programacion marcados en el PDF (recuadro morado). Fixture dorado para los tests del motor de horario: regla 'todos los martes' menos dias bloqueados debe dar exactamente esta lista.",
+  "slot": { "weekday": "TUE", "start": "17:40", "end": "19:25", "recurrence": "weekly", "intervalWeeks": 1 },
+  "dates": [
+    "2026-10-06", "2026-10-20", "2026-10-27",
+    "2026-11-03", "2026-11-10", "2026-11-17", "2026-11-24",
+    "2026-12-01", "2026-12-15",
+    "2027-01-12", "2027-01-19", "2027-01-26",
+    "2027-02-09", "2027-02-16", "2027-02-23",
+    "2027-03-02", "2027-03-09", "2027-03-16", "2027-03-23",
+    "2027-04-06", "2027-04-13", "2027-04-20", "2027-04-27",
+    "2027-05-04", "2027-05-18", "2027-05-25",
+    "2027-06-08"
+  ]
+}

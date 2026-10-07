@@ -1,0 +1,47 @@
+{
+  "course": "2026-2027",
+  "timezone": "Europe/Madrid",
+  "courseStart": "2026-10-01",
+  "courseEnd": "2027-06-18",
+  "source": [
+    "horario.png (captura del Excel de ejemplo, parcial)",
+    "Calendario PROGRAMACION 26_27.xlsx - Calendario.pdf (completo)"
+  ],
+  "status": "completo para el grupo DAM. Las tutorias NO van aqui: son de cada asignatura.",
+  "legend": {
+    "festivo": "azul - festivo",
+    "festivo_zaragoza": "rojo - festivo de Zaragoza",
+    "vacaciones": "azul continuo - vacaciones (Navidad, Semana Santa)",
+    "examenes": "verde - examenes del cuatrimestre / convocatorias de junio",
+    "defensa_proyecto": "gris - defensas de proyectos (SMR, ASIR, DAM, DAW)",
+    "inicio_curso / fin_curso": "recuadro - inicio/fin de curso"
+  },
+  "terms": [
+    { "name": "1er cuatrimestre", "start": "2026-10-01", "end": "2027-02-05" },
+    { "name": "2o cuatrimestre", "start": "2027-02-08", "end": "2027-06-18" }
+  ],
+  "marks": [
+    { "kind": "inicio_curso", "start": "2026-10-01", "end": "2026-10-01", "label": "Inicio de curso", "blocksClasses": false },
+
+    { "kind": "festivo", "start": "2026-10-12", "end": "2026-10-12", "label": "Festivo (Pilar)", "blocksClasses": true },
+    { "kind": "festivo_zaragoza", "start": "2026-10-13", "end": "2026-10-14", "label": "Festivo Zaragoza", "blocksClasses": true },
+    { "kind": "festivo", "start": "2026-11-02", "end": "2026-11-02", "label": "Festivo (Todos los Santos, trasladado)", "blocksClasses": true },
+    { "kind": "festivo", "start": "2026-12-07", "end": "2026-12-08", "label": "Festivo (puente + Inmaculada)", "blocksClasses": true },
+    { "kind": "vacaciones", "start": "2026-12-22", "end": "2027-01-06", "label": "Vacaciones de Navidad", "blocksClasses": true },
+    { "kind": "festivo_zaragoza", "start": "2027-01-29", "end": "2027-01-29", "label": "Festivo Zaragoza (San Valero)", "blocksClasses": true },
+    { "kind": "festivo_zaragoza", "start": "2027-03-05", "end": "2027-03-05", "label": "Festivo Zaragoza (Cincomarzada)", "blocksClasses": true },
+    { "kind": "vacaciones", "start": "2027-03-25", "end": "2027-04-04", "label": "Vacaciones de Semana Santa", "blocksClasses": true },
+    { "kind": "festivo", "start": "2027-04-23", "end": "2027-04-23", "label": "Festivo (San Jorge)", "blocksClasses": true },
+    { "kind": "festivo", "start": "2027-05-03", "end": "2027-05-03", "label": "Festivo", "blocksClasses": true },
+
+    { "kind": "examenes", "start": "2027-02-01", "end": "2027-02-05", "label": "Examenes 1er cuatrimestre", "groups": ["DAM", "DAW", "IABD", "DALP"], "blocksClasses": true },
+    { "kind": "examenes", "start": "2027-05-10", "end": "2027-05-14", "label": "Examenes 2o cuatrimestre", "groups": ["DAM", "DAW", "IABD", "DALP"], "blocksClasses": true },
+    { "kind": "examenes", "start": "2027-05-31", "end": "2027-06-04", "label": "Junio - J1 (todos)", "blocksClasses": true },
+    { "kind": "examenes", "start": "2027-06-14", "end": "2027-06-18", "label": "Junio - J2 (todos)", "blocksClasses": true },
+
+    { "kind": "defensa_proyecto", "start": "2027-05-24", "end": "2027-05-28", "label": "Defensas de proyectos - 1a convocatoria", "groups": ["SMR", "ASIR", "DAM", "DAW"], "blocksClasses": false },
+    { "kind": "defensa_proyecto", "start": "2027-06-08", "end": "2027-06-11", "label": "Defensas de proyectos - 2a convocatoria", "groups": ["SMR", "ASIR", "DAM", "DAW"], "blocksClasses": false },
+
+    { "kind": "fin_curso", "start": "2027-06-18", "end": "2027-06-18", "label": "Fin de curso", "blocksClasses": false, "note": "recuadro oscuro en el 18 de junio del PDF" }
+  ]
+}

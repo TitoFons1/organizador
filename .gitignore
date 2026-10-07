@@ -1,0 +1,18 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# entorno y datos locales
+.env
+.env.*
+!.env.example
+apps/api/data/*.db
+apps/api/data/*.db-*
+
+# editores / sistema
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db

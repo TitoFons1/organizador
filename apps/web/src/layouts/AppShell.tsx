@@ -1,5 +1,6 @@
 import { BookOpen, CalendarDays, Ellipsis, LayoutDashboard, NotebookPen } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
+import { AccountCard } from '../features/auth/AccountCard';
 import { es } from '../i18n/es';
 import { cn } from '../lib/cn';
 
@@ -38,6 +39,7 @@ export function AppShell() {
               </NavLink>
             ))}
           </nav>
+          <AccountCard />
         </div>
       </aside>
 

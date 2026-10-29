@@ -69,7 +69,7 @@ organizador-dam/
 
 | Área | Endpoints |
 |---|---|
-| Auth | `POST /auth/register` · `/auth/login` · `/auth/logout` · `GET /me` |
+| Auth | Better Auth bajo `/auth/*`: `POST /auth/sign-up/email` · `/auth/sign-in/email` · `/auth/sign-out` · `GET /auth/get-session`; propio: `GET /me` |
 | Workspace/grupo | `POST /groups` · `POST /groups/join {code}` · `POST /groups/leave` · `POST /groups/code/regenerate` · `DELETE /groups/members/:id` · `GET /workspace` (datos en bruto del espacio activo) |
 | Asignaturas | `GET/POST /subjects` · `PATCH /subjects/:id` · `POST /subjects/:id/archive` · `DELETE /subjects/:id` (con `confirmName`) · `POST /subjects/:id/restore` |
 | Horario | `POST/PATCH/DELETE /slots` · `POST /slots/:id/exceptions` · `DELETE /exceptions/:id` · `PUT /session-records/:slotId/:date` |
@@ -91,10 +91,11 @@ Cada hito termina con la app **ejecutándose y probada**, y una demo corta.
 - Los componentes shadcn/ui se añaden con la CLI a partir de M1, cuando haya formularios.
 - **Hecho cuando**: `npm run dev` levanta web + API + BD, el panel muestra "Conectado" y `npm run check` pasa en verde.
 
-### M1 · Cuentas y espacios — *2 sesiones*
+### M1 · Cuentas y espacios — *2 sesiones* ✅ hecho
 - Registro / login / logout con Better Auth; cookie `httpOnly`, `SameSite=Lax`.
 - Al registrarse: `Workspace(personal)` + `Membership(owner)` + `UserSettings`.
 - Helper `requireWorkspaceAccess`; rate limit en auth; `ALLOW_SIGNUP`.
+- Además (hallazgo de seguridad): comprobación global de `Origin` en peticiones que cambian estado, porque Better Auth solo la aplica cuando la petición trae cookies.
 - **Hecho cuando**: dos usuarios de prueba no ven nada del otro (test automático de acceso cruzado).
 
 ### M2 · Asignaturas — *2 sesiones*

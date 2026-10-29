@@ -1,0 +1,2 @@
+# Siempre LF en el arbol de trabajo (Prettier y el CI lo exigen), tambien en Windows.
+* text=auto eol=lf

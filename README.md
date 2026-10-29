@@ -18,7 +18,11 @@ npm install
 npm run dev        # API en http://127.0.0.1:3000 · web en http://localhost:5173
 ```
 
-La web hace proxy de `/api` hacia la API, así que basta con abrir `http://localhost:5173`.
+La web hace proxy de `/api` hacia la API, así que basta con abrir `http://localhost:5173` (con
+`localhost`, no con `127.0.0.1`: la API solo acepta peticiones cuyo `Origin` sea `APP_URL`).
+
+Las migraciones de la base de datos se aplican solas al arrancar la API. Para crear una nueva tras
+cambiar `apps/api/src/db/schema.ts`: `npm run db:generate -w @organizador/api` (y revisa el SQL).
 
 ## Scripts
 
@@ -44,4 +48,6 @@ docs/            Análisis, diseño y plan
 
 ## Configuración
 
-Copia `.env.example` a `apps/api/.env` si quieres cambiar el puerto o la base de datos.
+Copia `.env.example` a `apps/api/.env` si quieres cambiar el puerto, la base de datos o el registro.
+En **producción** `BETTER_AUTH_SECRET` es obligatorio (32+ caracteres; el comando para generarlo
+está en `.env.example`) y conviene poner `ALLOW_SIGNUP=false` cuando ya estén creadas las cuentas.

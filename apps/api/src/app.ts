@@ -1,3 +1,4 @@
+import { STATUS_CODES } from 'node:http';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { healthResponseSchema } from '@organizador/shared';
@@ -9,6 +10,7 @@ import {
 } from 'fastify-type-provider-zod';
 import type { Database } from './db/client';
 import type { Env } from './env';
+import { HttpError } from './http-error';
 import { createAuth } from './modules/auth/auth';
 import { registerAuthRoutes, type RateLimitRule } from './modules/auth/routes';
 import { createRequireWorkspaceAccess } from './modules/workspaces/access';
@@ -33,6 +35,23 @@ export async function buildApp({ database, env, logger = false, authRateLimit }:
 
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
+
+  // Un 5xx no debe ensenar al cliente su mensaje interno (con Drizzle incluye la SQL y sus
+  // parametros). Los 4xx y los HttpError, escritos para el cliente, siguen al manejador por defecto.
+  // Se registra antes que las rutas porque cada ruta se queda con el manejador vigente al crearse.
+  app.setErrorHandler((error, request, reply) => {
+    const raw = (error as { statusCode?: unknown } | null)?.statusCode;
+    const statusCode = typeof raw === 'number' && raw >= 400 ? raw : 500;
+    // `code()` hace falta para errores que no son `Error` (el rate limit lanza un objeto plano).
+    if (statusCode < 500 || error instanceof HttpError) return reply.code(statusCode).send(error);
+    request.log.error({ err: error }, 'Error no controlado');
+    return reply.code(statusCode).send({
+      statusCode,
+      code: 'INTERNAL_ERROR',
+      error: STATUS_CODES[statusCode] ?? 'Internal Server Error',
+      message: 'Error interno del servidor. Inténtalo de nuevo en un momento.',
+    });
+  });
 
   await app.register(helmet, {
     // La CSP la afinaremos al servir la web desde la propia API (fase de despliegue).

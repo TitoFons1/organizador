@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { SUBJECT_COLORS, type SubjectLinks } from '@organizador/shared';
 import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 const timestamp = (name: string) => integer(name, { mode: 'timestamp_ms' });
@@ -127,3 +128,29 @@ export const userSettings = sqliteTable('user_settings', {
   // Convencion de date-fns (`weekStartsOn`): 1 = lunes, 0 = domingo.
   weekStart: integer('week_start').notNull().default(1),
 });
+
+// ── Estructura del curso ────────────────────────────────────────────────────
+
+export const subject = sqliteTable(
+  'subject',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspace.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    shortName: text('short_name').notNull(),
+    color: text('color', { enum: SUBJECT_COLORS }).notNull(),
+    teacher: text('teacher'),
+    links: text('links', { mode: 'json' }).$type<SubjectLinks>().notNull(),
+    position: integer('position').notNull(),
+    // Archivada: terminada, se oculta del dia a dia pero se conserva.
+    archivedAt: timestamp('archived_at'),
+    // Borrado logico (D5): en la papelera 30 dias antes de purgarse.
+    deletedAt: timestamp('deleted_at'),
+    createdAt: createdAt(),
+  },
+  (table) => [index('subject_workspace_idx').on(table.workspaceId, table.deletedAt)],
+);

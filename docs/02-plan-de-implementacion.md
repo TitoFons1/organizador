@@ -98,7 +98,7 @@ Cada hito termina con la app **ejecutándose y probada**, y una demo corta.
 - Además (hallazgo de seguridad): comprobación global de `Origin` en peticiones que cambian estado, porque Better Auth solo la aplica cuando la petición trae cookies.
 - **Hecho cuando**: dos usuarios de prueba no ven nada del otro (test automático de acceso cruzado).
 
-### M2 · Asignaturas — *2 sesiones*
+### M2 · Asignaturas — *2 sesiones* ✅ hecho
 - CRUD, color de paleta, profesor, enlaces (aula virtual, NotebookLM, repo), reordenar.
 - **Eliminar con doble confirmación** (impacto → escribir nombre) y **Archivar**. Papelera.
 - **Hecho cuando**: puedo crear 6 asignaturas, archivar una, borrar otra y restaurarla desde la papelera; e2e en móvil.

@@ -62,3 +62,24 @@ body {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
+
+/* Etiqueta de asignatura: toma los colores de las variables que pone subjectColorStyle(). */
+.subject-chip {
+  background: var(--subject-bg);
+  color: var(--subject-fg);
+}
+
+.subject-dot {
+  background: var(--subject-dot);
+}
+
+@media (prefers-color-scheme: dark) {
+  .subject-chip {
+    background: var(--subject-bg-dark);
+    color: var(--subject-fg-dark);
+  }
+
+  .subject-dot {
+    background: var(--subject-dot-dark);
+  }
+}

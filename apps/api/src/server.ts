@@ -5,6 +5,7 @@ import { buildApp } from './app';
 import { createDb } from './db/client';
 import { runMigrations } from './db/migrate';
 import { loadEnv } from './env';
+import { purgeExpiredTrash } from './modules/trash/trash';
 
 const env = loadEnv();
 
@@ -19,6 +20,19 @@ const database = createDb(env.DATABASE_URL, env.DATABASE_AUTH_TOKEN);
 await runMigrations(database, fileURLToPath(new URL('../drizzle', import.meta.url)));
 
 const app = await buildApp({ database, env, logger: true });
+
+// Papelera: se vacia lo que lleva mas de 30 dias, al arrancar y despues cada 6 horas.
+const purgeTrash = async () => {
+  try {
+    const purged = await purgeExpiredTrash(database);
+    if (purged > 0) app.log.info(`Papelera: ${purged} elemento(s) purgado(s)`);
+  } catch (error) {
+    app.log.error({ err: error }, 'No se pudo purgar la papelera');
+  }
+};
+await purgeTrash();
+const purgeTimer = setInterval(() => void purgeTrash(), 6 * 60 * 60 * 1000);
+purgeTimer.unref();
 
 const close = async (signal: string) => {
   app.log.info(`${signal} recibido, cerrando`);

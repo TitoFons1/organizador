@@ -12,6 +12,8 @@ import type { Env } from './env';
 import { createAuth } from './modules/auth/auth';
 import { registerAuthRoutes, type RateLimitRule } from './modules/auth/routes';
 import { createRequireWorkspaceAccess } from './modules/workspaces/access';
+import { registerSubjectRoutes } from './modules/subjects/routes';
+import { registerTrashRoutes } from './modules/trash/routes';
 import { registerWorkspaceRoutes } from './modules/workspaces/routes';
 import { registerOriginCheck } from './plugins/origin-check';
 
@@ -68,6 +70,8 @@ export async function buildApp({ database, env, logger = false, authRateLimit }:
     readLimit: authRateLimit?.read ?? { max: 120, timeWindow: '1 minute' },
   });
   registerWorkspaceRoutes(plainApp, { database });
+  registerSubjectRoutes(plainApp, { database });
+  registerTrashRoutes(plainApp, { database });
 
   return plainApp;
 }

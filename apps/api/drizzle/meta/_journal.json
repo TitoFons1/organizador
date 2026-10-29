@@ -8,6 +8,13 @@
       "when": 1791455736594,
       "tag": "0000_cuentas_y_espacios",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1791458857091,
+      "tag": "0001_asignaturas",
+      "breakpoints": true
     }
   ]
 }

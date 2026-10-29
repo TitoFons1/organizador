@@ -50,4 +50,5 @@ docs/            Análisis, diseño y plan
 
 Copia `.env.example` a `apps/api/.env` si quieres cambiar el puerto, la base de datos o el registro.
 En **producción** `BETTER_AUTH_SECRET` es obligatorio (32+ caracteres; el comando para generarlo
-está en `.env.example`) y conviene poner `ALLOW_SIGNUP=false` cuando ya estén creadas las cuentas.
+está en `.env.example`) y el registro está cerrado salvo que pongas `ALLOW_SIGNUP=true` (hazlo solo
+mientras se crean las cuentas).

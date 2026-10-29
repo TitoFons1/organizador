@@ -3,11 +3,12 @@ import { z } from 'zod';
 // Solo para desarrollo y tests: en produccion BETTER_AUTH_SECRET es obligatorio.
 const DEV_AUTH_SECRET = 'solo-desarrollo-no-usar-en-produccion-0123456789';
 
-// z.coerce.boolean() convertiria el texto "false" en true, asi que se parsea a mano.
+// z.coerce.boolean() convertiria el texto "false" en true, asi que se parsea a mano. Vacia o sin
+// definir queda `undefined` para que cada variable decida su valor por defecto.
 const booleanFlag = z
-  .enum(['true', 'false'])
-  .prefault('true')
-  .transform((value) => value === 'true');
+  .enum(['true', 'false', ''])
+  .optional()
+  .transform((value) => (value ? value === 'true' : undefined));
 
 const envSchema = z
   .object({
@@ -41,7 +42,12 @@ const envSchema = z
       });
     }
   })
-  .transform((env) => ({ ...env, BETTER_AUTH_SECRET: env.BETTER_AUTH_SECRET ?? DEV_AUTH_SECRET }));
+  .transform((env) => ({
+    ...env,
+    BETTER_AUTH_SECRET: env.BETTER_AUTH_SECRET ?? DEV_AUTH_SECRET,
+    // D7: sin valor explicito, el registro queda abierto en desarrollo y cerrado en produccion.
+    ALLOW_SIGNUP: env.ALLOW_SIGNUP ?? env.NODE_ENV !== 'production',
+  }));
 
 export type Env = z.infer<typeof envSchema>;
 

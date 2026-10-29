@@ -17,6 +17,14 @@ describe('loadEnv', () => {
     expect(loadEnv({ ALLOW_SIGNUP: 'true' }).ALLOW_SIGNUP).toBe(true);
   });
 
+  it('sin ALLOW_SIGNUP el registro queda cerrado en produccion y abierto fuera de ella', () => {
+    const production = { NODE_ENV: 'production', BETTER_AUTH_SECRET: strongSecret } as const;
+    expect(loadEnv(production).ALLOW_SIGNUP).toBe(false);
+    expect(loadEnv({ ...production, ALLOW_SIGNUP: '' }).ALLOW_SIGNUP).toBe(false);
+    expect(loadEnv({ ...production, ALLOW_SIGNUP: 'true' }).ALLOW_SIGNUP).toBe(true);
+    expect(loadEnv({ NODE_ENV: 'test' }).ALLOW_SIGNUP).toBe(true);
+  });
+
   it('rechaza un valor de ALLOW_SIGNUP que no sea true/false', () => {
     expect(() => loadEnv({ ALLOW_SIGNUP: 'no' })).toThrow(/ALLOW_SIGNUP/);
   });

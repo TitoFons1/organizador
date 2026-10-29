@@ -230,6 +230,8 @@ describe('cookies en produccion', () => {
       NODE_ENV: 'production',
       APP_URL: 'https://organizador.example.com',
       BETTER_AUTH_SECRET: 'p'.repeat(48),
+      // En produccion el registro esta cerrado por defecto; aqui hace falta crear una cuenta.
+      ALLOW_SIGNUP: 'true',
     });
   });
   afterAll(() => context.close());

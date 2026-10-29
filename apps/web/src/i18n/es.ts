@@ -35,6 +35,7 @@ export const es = {
     save: 'Guardar',
     saving: 'Guardando…',
     back: 'Volver',
+    close: 'Cerrar',
     serverError: 'No se puede contactar con el servidor. Inténtalo de nuevo en un momento.',
   },
   subjects: {
@@ -106,6 +107,7 @@ export const es = {
     cancelBrush: 'Cancelar selección',
     painted: (kind: string, from: string, to: string) =>
       from === to ? `Añadido: ${kind}, el ${from}.` : `Añadido: ${kind}, del ${from} al ${to}.`,
+    monthsTitle: 'Meses del curso',
     weekdays: ['L', 'M', 'X', 'J', 'V', 'S', 'D'],
     today: 'hoy',
     blocks: 'Anula clases y tutorías',
@@ -124,6 +126,7 @@ export const es = {
       blocks: 'Anula clases y tutorías',
       invalidDate: 'Elige una fecha válida.',
       invalidRange: 'La fecha final no puede ser anterior a la inicial.',
+      tooLong: 'Una marca no puede durar más de un año.',
     },
     groups: (list: string) => `Grupos: ${list}`,
     terms: {

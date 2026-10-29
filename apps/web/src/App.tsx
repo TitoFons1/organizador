@@ -7,6 +7,7 @@ import { MorePage } from './features/account/MorePage';
 import { GuestOnly, RequireAuth } from './features/auth/guards';
 import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
+import { CalendarPage } from './features/calendar/CalendarPage';
 import { createQueryClient } from './features/auth/session';
 import { ServerStatus } from './features/health/ServerStatus';
 import { DeleteSubjectPage } from './features/subjects/DeleteSubjectPage';
@@ -41,10 +42,7 @@ export const routes: RouteObject[] = [
                   </PagePlaceholder>
                 ),
               },
-              {
-                path: 'calendario',
-                element: <PagePlaceholder title={es.nav.calendar} milestone="M3" />,
-              },
+              { path: 'calendario', element: <CalendarPage /> },
               { path: 'asignaturas', element: <SubjectsPage /> },
               { path: 'asignaturas/nueva', element: <SubjectFormPage /> },
               { path: 'asignaturas/:id/editar', element: <SubjectFormPage /> },

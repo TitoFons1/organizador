@@ -1,6 +1,6 @@
 # 02 · Plan de implementación — Organizador DAM
 
-> Complementa a `01-analisis-y-diseno.md`. Nada de esto se ha empezado a programar.
+> Complementa a `01-analisis-y-diseno.md`. Estado: M0–M3 hechos; el siguiente es M4.
 > Tamaños orientativos en **sesiones** (≈ 2–3 h de trabajo conjunto). No son una promesa: sirven para ordenar.
 
 ## 1. Alcance del MVP (congelado)
@@ -15,7 +15,7 @@ Entra: R1–R12 de `01-analisis-y-diseno.md` (asignaturas, horario con frecuenci
 |---|---|---|
 | Monorepo | **npm workspaces** (`apps/web`, `apps/api`, `packages/shared`) | Tipos y lógica de horario compartidos; sin instalar nada extra (pnpm no está en el equipo) |
 | Frontend | **React 19 + Vite + TypeScript**, React Router | Estándar, rápido |
-| UI | **Tailwind CSS + shadcn/ui (Radix)** | Accesible, mobile-first, tema claro/oscuro |
+| UI | **Tailwind CSS** + componentes propios (`components/ui`) | Accesible, mobile-first, tema claro/oscuro. Se descartó shadcn/ui: con pocos componentes no compensaba |
 | Datos en cliente | **TanStack Query** (+ persistencia en IndexedDB) | Caché, refresco al volver a la app, lectura sin conexión |
 | Formularios | **react-hook-form + zod** | Mismo esquema que el servidor |
 | Fechas | **date-fns** (fechas "civiles" como texto `YYYY-MM-DD`) | Evita bugs de zona horaria / cambio de hora |
@@ -84,11 +84,11 @@ organizador-dam/
 
 Cada hito termina con la app **ejecutándose y probada**, y una demo corta.
 
-### M0 · Fundaciones — *1–2 sesiones* ✅ en curso
+### M0 · Fundaciones — *1–2 sesiones* ✅ hecho
 - `git init`, npm workspaces, TS estricto, ESLint/Prettier, Vitest, CI (formato + lint + typecheck + test + build).
 - SQLite (libSQL) + Drizzle conectado; `.env.example`.
 - Fastify con `/api/v1/health`; Vite con Tailwind; layout vacío con barra inferior (móvil) / lateral (PC); tokens de color claro/oscuro.
-- Los componentes shadcn/ui se añaden con la CLI a partir de M1, cuando haya formularios.
+- Componentes de UI propios en `apps/web/src/components/ui` (Button, Field, Select) en lugar de shadcn/ui.
 - **Hecho cuando**: `npm run dev` levanta web + API + BD, el panel muestra "Conectado" y `npm run check` pasa en verde.
 
 ### M1 · Cuentas y espacios — *2 sesiones* ✅ hecho
@@ -104,11 +104,12 @@ Cada hito termina con la app **ejecutándose y probada**, y una demo corta.
 - **Hecho cuando**: puedo crear 6 asignaturas, archivar una, borrar otra y restaurarla desde la papelera; e2e en móvil.
 - e2e: `e2e/tests/subjects.spec.ts` recorre este criterio con Playwright en móvil (360 px) y escritorio (1280 px), también en el CI.
 
-### M3 · Calendario del curso — *2 sesiones*
+### M3 · Calendario del curso — *2 sesiones* ✅ hecho
 - `Term` y `CalendarMark` con CRUD; importador de `data/calendario-2026-2027.seed.json`.
 - Editor de calendario con "pincel" de colores (los 12 meses, táctil).
 - Avisos de datos incompletos (fin de curso sin definir).
 - **Hecho cuando**: el calendario 2026-27 queda cargado y editable, y la leyenda coincide con tu Excel.
+- e2e: `e2e/tests/calendar.spec.ts` carga el 2026-27, pinta y edita una marca y comprueba que persiste (móvil y escritorio). Las marcas duran como mucho 366 días.
 
 ### M4 · Horario y motor de recurrencia — *3 sesiones* (el hito más delicado)
 - `ScheduleSlot` (`weekly`/`dates`, `intervalWeeks`, `anchorDate`) y `SlotException` (cancelar/mover/extra).

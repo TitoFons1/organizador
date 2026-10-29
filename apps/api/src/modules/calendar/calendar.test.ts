@@ -124,6 +124,7 @@ describe('marcas', () => {
     const bad: Partial<MarkInput>[] = [
       { endDate: '2026-11-01' }, // acaba antes de empezar
       { startDate: '2026-02-30', endDate: '2026-03-01' }, // fecha inexistente
+      { startDate: 'abc' }, // mal escrita: 400, no 500
       { kind: 'fiesta' as never },
       { label: '   ' },
       { label: 'x'.repeat(121) },
@@ -144,6 +145,25 @@ describe('marcas', () => {
     expect(response.statusCode).toBe(400);
     expect(response.json()).toMatchObject({ code: 'INVALID_RANGE' });
     expect((await calendarOf(ana)).marks.find((m) => m.id === id)?.endDate).toBe('2026-11-02');
+  });
+
+  it('una marca no puede durar mas de un ano, tampoco tras un PATCH', async () => {
+    const tooLong = await call(
+      context,
+      'POST',
+      '/api/v1/marks',
+      ana,
+      markInput({ endDate: '2206-11-02' }),
+    );
+    expect(tooLong.statusCode).toBe(400);
+
+    const created = await call(context, 'POST', '/api/v1/marks', ana, markInput());
+    const { id } = markSchema.parse(created.json());
+    const response = await call(context, 'PATCH', `/api/v1/marks/${id}`, ana, {
+      endDate: '2206-11-02',
+    });
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({ code: 'RANGE_TOO_LONG' });
   });
 });
 

@@ -50,7 +50,7 @@ export function MonthGrid({
       aria-label={formatMonth(month)}
       className="rounded-xl border border-border bg-surface p-3"
     >
-      <h3 className="mb-2 text-sm font-semibold capitalize">{formatMonth(month)}</h3>
+      <h3 className="mb-2 text-sm font-semibold first-letter:uppercase">{formatMonth(month)}</h3>
       <div className="grid grid-cols-7 gap-1 text-center">
         {es.calendar.weekdays.map((name, index) => (
           <span key={name + index} aria-hidden className="pb-1 text-xs font-medium text-fg-muted">

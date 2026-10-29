@@ -1,10 +1,18 @@
 import {
   EMPTY_SUBJECT_LINKS,
+  markInputSchema,
+  markPatchSchema,
+  normalizeSeed,
   subjectInputSchema,
+  termInputSchema,
+  termPatchSchema,
+  type Mark,
   type Subject,
   type SubjectInput,
+  type Term,
   type TrashItem,
 } from '@organizador/shared';
+import courseSeed from '../../../../data/calendario-2026-2027.seed.json';
 import { ANA_ME, HEALTH_OK, mockApi } from './mock-api';
 
 type Handlers = Parameters<typeof mockApi>[0];
@@ -13,10 +21,14 @@ type Handlers = Parameters<typeof mockApi>[0];
  * Backend en memoria con la misma forma que la API real, para probar la web de punta a punta
  * sin servidor. Cada hito anade aqui sus endpoints.
  */
-export function createFakeBackend(initial: { subjects?: Subject[] } = {}) {
+export function createFakeBackend(
+  initial: { subjects?: Subject[]; marks?: Mark[]; terms?: Term[] } = {},
+) {
   const state = {
     subjects: [...(initial.subjects ?? [])],
     trash: [] as TrashItem[],
+    marks: [...(initial.marks ?? [])],
+    terms: [...(initial.terms ?? [])],
     nextId: 1,
   };
 
@@ -86,6 +98,57 @@ export function createFakeBackend(initial: { subjects?: Subject[] } = {}) {
         deletedAt,
         purgeAt: '2026-11-07T10:00:00.000Z',
       });
+      return { status: 204 };
+    },
+
+    'GET /api/v1/calendar': () => ({ body: { terms: state.terms, marks: state.marks } }),
+    'POST /api/v1/calendar/import-seed': () => {
+      // Como el servidor: idempotente, lo que ya existe se omite.
+      const seed = normalizeSeed(courseSeed);
+      const known = new Set(state.marks.map((m) => `${m.kind}|${m.startDate}|${m.label}`));
+      const newMarks = seed.marks.filter((m) => !known.has(`${m.kind}|${m.startDate}|${m.label}`));
+      const newTerms = seed.terms.filter((t) => !state.terms.some((x) => x.name === t.name));
+      state.marks.push(...newMarks.map((m) => ({ ...m, id: `m${state.nextId++}` })));
+      state.terms.push(...newTerms.map((t) => ({ ...t, id: `t${state.nextId++}` })));
+      return {
+        body: {
+          createdTerms: newTerms.length,
+          skippedTerms: seed.terms.length - newTerms.length,
+          createdMarks: newMarks.length,
+          skippedMarks: seed.marks.length - newMarks.length,
+        },
+      };
+    },
+    'POST /api/v1/marks': ({ body }) => {
+      const created: Mark = { ...markInputSchema.parse(body), id: `m${state.nextId++}` };
+      state.marks.push(created);
+      return { status: 201, body: created };
+    },
+    'PATCH /api/v1/marks/:id': ({ params, body }) => {
+      const current = state.marks.find((m) => m.id === params.id);
+      if (!current) return { status: 404, body: { code: 'MARK_NOT_FOUND' } };
+      const updated: Mark = { ...current, ...markPatchSchema.parse(body) };
+      state.marks = state.marks.map((m) => (m.id === current.id ? updated : m));
+      return { body: updated };
+    },
+    'DELETE /api/v1/marks/:id': ({ params }) => {
+      state.marks = state.marks.filter((m) => m.id !== params.id);
+      return { status: 204 };
+    },
+    'POST /api/v1/terms': ({ body }) => {
+      const created: Term = { ...termInputSchema.parse(body), id: `t${state.nextId++}` };
+      state.terms.push(created);
+      return { status: 201, body: created };
+    },
+    'PATCH /api/v1/terms/:id': ({ params, body }) => {
+      const current = state.terms.find((t) => t.id === params.id);
+      if (!current) return { status: 404, body: { code: 'TERM_NOT_FOUND' } };
+      const updated: Term = { ...current, ...termPatchSchema.parse(body) };
+      state.terms = state.terms.map((t) => (t.id === current.id ? updated : t));
+      return { body: updated };
+    },
+    'DELETE /api/v1/terms/:id': ({ params }) => {
+      state.terms = state.terms.filter((t) => t.id !== params.id);
       return { status: 204 };
     },
 

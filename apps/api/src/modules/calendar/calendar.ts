@@ -1,12 +1,14 @@
-import type {
-  CalendarResponse,
-  ImportResult,
-  Mark,
-  MarkInput,
-  MarkPatch,
-  Term,
-  TermInput,
-  TermPatch,
+import {
+  MARK_MAX_DAYS,
+  markLength,
+  type CalendarResponse,
+  type ImportResult,
+  type Mark,
+  type MarkInput,
+  type MarkPatch,
+  type Term,
+  type TermInput,
+  type TermPatch,
 } from '@organizador/shared';
 import { and, asc, eq } from 'drizzle-orm';
 import type { Database } from '../../db/client';
@@ -37,6 +39,8 @@ const markNotFound = () => new HttpError(404, 'Marca no encontrada.', 'MARK_NOT_
 const termNotFound = () => new HttpError(404, 'Cuatrimestre no encontrado.', 'TERM_NOT_FOUND');
 const invalidRange = () =>
   new HttpError(400, 'La fecha final no puede ser anterior a la inicial.', 'INVALID_RANGE');
+const rangeTooLong = () =>
+  new HttpError(400, `Una marca no puede durar mas de ${MARK_MAX_DAYS} dias.`, 'RANGE_TOO_LONG');
 
 /** Todas las consultas pasan por aqui para que ninguna olvide filtrar por espacio (D1). */
 const markInWorkspace = (workspaceId: string) => eq(calendarMark.workspaceId, workspaceId);
@@ -95,6 +99,7 @@ export async function updateMark(
   };
   // El PATCH solo valida campos sueltos; la coherencia entre fechas se comprueba con el resultado.
   if (next.endDate < next.startDate) throw invalidRange();
+  if (markLength(next) > MARK_MAX_DAYS) throw rangeTooLong();
 
   const [row] = await database.db
     .update(calendarMark)

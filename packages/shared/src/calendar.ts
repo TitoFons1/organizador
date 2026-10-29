@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { civilDateSchema, diffDays, eachDay, type CivilDate } from './civil-date';
+import { civilDateSchema, diffDays, eachDay, isCivilDate, type CivilDate } from './civil-date';
 
 /** Tipos de marca del calendario del curso (la leyenda del Excel). */
 export const MARK_KINDS = [
@@ -40,6 +40,8 @@ export const MARK_PRIORITY: readonly MarkKind[] = [
 export const MARK_LABEL_MAX = 120;
 export const TERM_NAME_MAX = 60;
 export const MARK_GROUP_MAX = 20;
+/** Una marca dura como mucho un ano: una fecha mal escrita (2026 -> 2206) no debe colarse. */
+export const MARK_MAX_DAYS = 366;
 
 const rangeIsValid = (value: { startDate: string; endDate: string }) =>
   value.endDate >= value.startDate;
@@ -55,7 +57,18 @@ const markFields = z.object({
   groups: z.array(z.string().trim().min(1).max(MARK_GROUP_MAX)).max(12).nullable(),
 });
 
-export const markInputSchema = markFields.refine(rangeIsValid, rangeMessage);
+// zod ejecuta los refine del objeto aunque una fecha ya sea invalida: sin la guarda, markLength
+// lanzaria una excepcion en vez de devolver un error de validacion.
+const rangeNotTooLong = (value: { startDate: string; endDate: string }) =>
+  !isCivilDate(value.startDate) ||
+  !isCivilDate(value.endDate) ||
+  markLength(value) <= MARK_MAX_DAYS;
+
+export const markInputSchema = markFields
+  .refine(rangeIsValid, rangeMessage)
+  .refine(rangeNotTooLong, {
+    message: `Una marca no puede durar mas de ${MARK_MAX_DAYS} dias`,
+  });
 export type MarkInput = z.infer<typeof markInputSchema>;
 
 export const markPatchSchema = markFields.partial();

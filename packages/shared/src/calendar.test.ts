@@ -47,6 +47,19 @@ describe('markInputSchema / termInputSchema', () => {
     expect(markInputSchema.safeParse({ ...base, label: '  ' }).success).toBe(false);
   });
 
+  it('una marca dura como mucho un ano (366 dias)', () => {
+    const range = (endDate: string) => ({ ...base, startDate: '2027-01-01', endDate });
+    expect(markInputSchema.safeParse(range('2028-01-01')).success).toBe(true); // 366 dias
+    expect(markInputSchema.safeParse(range('2028-01-02')).success).toBe(false);
+    expect(markInputSchema.safeParse(range('2206-01-01')).success).toBe(false);
+  });
+
+  it('una fecha mal escrita es un error de validacion, no una excepcion', () => {
+    for (const startDate of ['abc', '2026-1-1', '']) {
+      expect(markInputSchema.safeParse({ ...base, startDate }).success).toBe(false);
+    }
+  });
+
   it('un cuatrimestre puede no tener fecha de fin, pero no acabar antes de empezar', () => {
     const term = { name: '1er cuatrimestre', startDate: '2026-10-01', endDate: null };
     expect(termInputSchema.safeParse(term).success).toBe(true);

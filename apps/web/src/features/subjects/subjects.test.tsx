@@ -196,10 +196,10 @@ describe('eliminar con doble confirmacion y papelera', () => {
     expect(await screen.findByText('Vas a eliminar «Bases de Datos».')).toBeVisible();
     expect(screen.getByText(/Todavía no tiene tareas, notas ni franjas/)).toBeVisible();
     // Paso 1: todavia no se puede borrar.
-    expect(screen.queryByRole('button', { name: 'Eliminar definitivamente' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Enviar a la papelera' })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Continuar' }));
 
-    const confirm = screen.getByRole('button', { name: 'Eliminar definitivamente' });
+    const confirm = screen.getByRole('button', { name: 'Enviar a la papelera' });
     expect(confirm).toBeDisabled();
     const input = screen.getByLabelText('Para confirmar, escribe «Bases de Datos»');
     await user.type(input, 'bases de');
@@ -227,7 +227,7 @@ describe('eliminar con doble confirmacion y papelera', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Continuar' }));
     await user.type(screen.getByLabelText(/Para confirmar/), 'Bases de Datos');
-    await user.click(screen.getByRole('button', { name: 'Eliminar definitivamente' }));
+    await user.click(screen.getByRole('button', { name: 'Enviar a la papelera' }));
 
     expect(await screen.findByText('El nombre no coincide.')).toBeVisible();
   });
@@ -239,7 +239,7 @@ describe('eliminar con doble confirmacion y papelera', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Continuar' }));
     await user.type(screen.getByLabelText(/Para confirmar/), 'Bases de Datos');
-    await user.click(screen.getByRole('button', { name: 'Eliminar definitivamente' }));
+    await user.click(screen.getByRole('button', { name: 'Enviar a la papelera' }));
     await screen.findByText('Aún no tienes asignaturas');
 
     // Papelera: desde "Más".

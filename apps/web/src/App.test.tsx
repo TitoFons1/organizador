@@ -1,6 +1,8 @@
-import { screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { createMemoryRouter, RouterProvider } from 'react-router';
+import { describe, expect, it, vi } from 'vitest';
+import { routes } from './App';
 import { ANA_ME, HEALTH_OK, mockApi, UNAUTHORIZED } from './test/mock-api';
 import { renderApp } from './test/render';
 
@@ -50,5 +52,37 @@ describe('AppShell', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Entrar' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Panel' })).not.toBeInTheDocument();
+  });
+});
+
+describe('rutas desconocidas y errores', () => {
+  it('una direccion que no existe muestra "Página no encontrada" con la navegacion', async () => {
+    mockApi({ 'GET /api/v1/me': { body: ANA_ME } });
+
+    renderApp('/no-existe');
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Página no encontrada' }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole('navigation', { name: 'Principal' }).length).toBeGreaterThan(0);
+  });
+
+  it('un fallo al pintar una pantalla muestra la pagina de error de la raiz', async () => {
+    // React registra el error en consola; aqui es lo esperado.
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    function Boom(): never {
+      throw new Error('fallo de prueba');
+    }
+    const router = createMemoryRouter([
+      { errorElement: routes[0]!.errorElement, children: [{ index: true, element: <Boom /> }] },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Algo ha fallado' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Recargar la página' })).toBeInTheDocument();
+    consoleError.mockRestore();
   });
 });

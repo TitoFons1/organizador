@@ -11,6 +11,16 @@ export const es = {
   placeholder: {
     comingIn: (milestone: string) => `Esta sección llega en ${milestone}.`,
   },
+  notFound: {
+    title: 'Página no encontrada',
+    text: 'La dirección que has abierto no existe o ha cambiado.',
+    goHome: 'Ir al panel',
+  },
+  crash: {
+    title: 'Algo ha fallado',
+    text: 'Ha ocurrido un error inesperado al mostrar esta pantalla.',
+    reload: 'Recargar la página',
+  },
   status: {
     title: 'Estado del servidor',
     loading: 'Comprobando…',
@@ -69,8 +79,9 @@ export const es = {
       archiveInstead: 'Si solo ha terminado el curso, es mejor archivarla.',
       continue: 'Continuar',
       confirmLabel: (name: string) => `Para confirmar, escribe «${name}»`,
-      confirm: 'Eliminar definitivamente',
-      confirming: 'Eliminando…',
+      // Va a la papelera (30 dias), asi que el boton no debe decir "definitivamente".
+      confirm: 'Enviar a la papelera',
+      confirming: 'Enviando a la papelera…',
       mismatch: 'El nombre no coincide.',
     },
   },

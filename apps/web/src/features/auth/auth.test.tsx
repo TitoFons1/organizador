@@ -220,3 +220,17 @@ describe('cerrar sesion', () => {
     expect(sentBodies(api, 'POST', '/api/v1/auth/sign-out')).toHaveLength(1);
   });
 });
+
+describe('sesion caducada', () => {
+  it('si una peticion responde 401, lleva a la entrada recordando a donde se iba', async () => {
+    mockApi({
+      'GET /api/v1/me': { body: ANA_ME },
+      'GET /api/v1/subjects': UNAUTHORIZED,
+    });
+    const { router, client } = renderApp('/asignaturas');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Entrar' })).toBeInTheDocument();
+    expect(router.state.location.state).toEqual({ from: '/asignaturas' });
+    expect(client.getQueryData(['me'])).toBeNull();
+  });
+});

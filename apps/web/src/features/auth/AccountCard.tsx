@@ -3,7 +3,8 @@ import { LogOut } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { es } from '../../i18n/es';
 import { signOut } from './auth-api';
-import { ME_QUERY_KEY, useMe } from './useMe';
+import { clearSession } from './session';
+import { useMe } from './useMe';
 
 export function AccountCard() {
   const me = useMe();
@@ -11,11 +12,8 @@ export function AccountCard() {
 
   const logout = useMutation({
     mutationFn: signOut,
-    onSettled: () => {
-      // Se descarta todo lo cacheado de esta persona para que la siguiente no lo vea.
-      queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== ME_QUERY_KEY[0] });
-      queryClient.setQueryData(ME_QUERY_KEY, null);
-    },
+    // Se descarta todo lo cacheado de esta persona para que la siguiente no lo vea.
+    onSettled: () => clearSession(queryClient),
   });
 
   if (!me.data) return null;

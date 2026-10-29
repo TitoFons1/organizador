@@ -1,10 +1,13 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { createBrowserRouter, RouterProvider, type RouteObject } from 'react-router';
+import { NotFoundPage } from './components/NotFoundPage';
 import { PagePlaceholder } from './components/PagePlaceholder';
+import { RouteErrorPage } from './components/RouteErrorPage';
 import { MorePage } from './features/account/MorePage';
 import { GuestOnly, RequireAuth } from './features/auth/guards';
 import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
+import { createQueryClient } from './features/auth/session';
 import { ServerStatus } from './features/health/ServerStatus';
 import { DeleteSubjectPage } from './features/subjects/DeleteSubjectPage';
 import { SubjectFormPage } from './features/subjects/SubjectFormPage';
@@ -15,45 +18,51 @@ import { AppShell } from './layouts/AppShell';
 
 export const routes: RouteObject[] = [
   {
-    element: <GuestOnly />,
-    children: [
-      { path: 'entrar', element: <LoginPage /> },
-      { path: 'registro', element: <RegisterPage /> },
-    ],
-  },
-  {
-    element: <RequireAuth />,
+    errorElement: <RouteErrorPage />,
     children: [
       {
-        element: <AppShell />,
+        element: <GuestOnly />,
+        children: [
+          { path: 'entrar', element: <LoginPage /> },
+          { path: 'registro', element: <RegisterPage /> },
+        ],
+      },
+      {
+        element: <RequireAuth />,
         children: [
           {
-            index: true,
-            element: (
-              <PagePlaceholder title={es.nav.panel} milestone="M6">
-                <ServerStatus />
-              </PagePlaceholder>
-            ),
+            element: <AppShell />,
+            children: [
+              {
+                index: true,
+                element: (
+                  <PagePlaceholder title={es.nav.panel} milestone="M6">
+                    <ServerStatus />
+                  </PagePlaceholder>
+                ),
+              },
+              {
+                path: 'calendario',
+                element: <PagePlaceholder title={es.nav.calendar} milestone="M3" />,
+              },
+              { path: 'asignaturas', element: <SubjectsPage /> },
+              { path: 'asignaturas/nueva', element: <SubjectFormPage /> },
+              { path: 'asignaturas/:id/editar', element: <SubjectFormPage /> },
+              { path: 'asignaturas/:id/eliminar', element: <DeleteSubjectPage /> },
+              { path: 'papelera', element: <TrashPage /> },
+              { path: 'notas', element: <PagePlaceholder title={es.nav.notes} milestone="M7" /> },
+              { path: 'mas', element: <MorePage /> },
+              { path: '*', element: <NotFoundPage /> },
+            ],
           },
-          {
-            path: 'calendario',
-            element: <PagePlaceholder title={es.nav.calendar} milestone="M3" />,
-          },
-          { path: 'asignaturas', element: <SubjectsPage /> },
-          { path: 'asignaturas/nueva', element: <SubjectFormPage /> },
-          { path: 'asignaturas/:id/editar', element: <SubjectFormPage /> },
-          { path: 'asignaturas/:id/eliminar', element: <DeleteSubjectPage /> },
-          { path: 'papelera', element: <TrashPage /> },
-          { path: 'notas', element: <PagePlaceholder title={es.nav.notes} milestone="M7" /> },
-          { path: 'mas', element: <MorePage /> },
         ],
       },
     ],
   },
 ];
 
-const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: true } },
+const queryClient = createQueryClient({
+  queries: { staleTime: 30_000, refetchOnWindowFocus: true },
 });
 const router = createBrowserRouter(routes);
 

@@ -15,6 +15,13 @@
       "when": 1791458857091,
       "tag": "0001_asignaturas",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791459734992,
+      "tag": "0002_calendario",
+      "breakpoints": true
     }
   ]
 }

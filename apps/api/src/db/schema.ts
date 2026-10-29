@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { SUBJECT_COLORS, type SubjectLinks } from '@organizador/shared';
+import { MARK_KINDS, SUBJECT_COLORS, type SubjectLinks } from '@organizador/shared';
 import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 const timestamp = (name: string) => integer(name, { mode: 'timestamp_ms' });
@@ -153,4 +153,45 @@ export const subject = sqliteTable(
     createdAt: createdAt(),
   },
   (table) => [index('subject_workspace_idx').on(table.workspaceId, table.deletedAt)],
+);
+
+// ── Calendario del curso ────────────────────────────────────────────────────
+// Las fechas son "civiles" (D4): texto AAAA-MM-DD, sin hora ni zona.
+
+export const term = sqliteTable(
+  'term',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspace.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    startDate: text('start_date').notNull(),
+    // Sin fecha de fin = dato incompleto (la app avisa, no falla).
+    endDate: text('end_date'),
+    createdAt: createdAt(),
+  },
+  (table) => [index('term_workspace_idx').on(table.workspaceId)],
+);
+
+export const calendarMark = sqliteTable(
+  'calendar_mark',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspace.id, { onDelete: 'cascade' }),
+    kind: text('kind', { enum: MARK_KINDS }).notNull(),
+    startDate: text('start_date').notNull(),
+    endDate: text('end_date').notNull(),
+    label: text('label').notNull(),
+    blocksClasses: integer('blocks_classes', { mode: 'boolean' }).notNull(),
+    groups: text('groups', { mode: 'json' }).$type<string[] | null>(),
+    createdAt: createdAt(),
+  },
+  (table) => [index('calendar_mark_workspace_idx').on(table.workspaceId, table.startDate)],
 );

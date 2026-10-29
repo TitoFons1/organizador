@@ -4,6 +4,8 @@ import type { Database } from '../../db/client';
 import { subject } from '../../db/schema';
 import { HttpError } from '../../http-error';
 import { countSlots } from '../schedule/schedule';
+import { countTasks } from '../tasks/tasks';
+import type { Viewer } from '../workspaces/access';
 
 type SubjectRow = typeof subject.$inferSelect;
 
@@ -137,12 +139,15 @@ export async function reorderSubjects(database: Database, workspaceId: string, i
  */
 export async function subjectImpact(
   database: Database,
-  workspaceId: string,
+  viewer: Viewer,
   id: string,
 ): Promise<SubjectImpact> {
-  const row = await findActive(database, workspaceId, id);
-  const slots = await countSlots(database, workspaceId, id);
-  return { subject: { id: row.id, name: row.name }, tasks: 0, notes: 0, slots };
+  const row = await findActive(database, viewer.workspaceId, id);
+  const [slots, tasks] = await Promise.all([
+    countSlots(database, viewer.workspaceId, id),
+    countTasks(database, viewer, id),
+  ]);
+  return { subject: { id: row.id, name: row.name }, tasks, notes: 0, slots };
 }
 
 /** Compara sin importar mayusculas ni espacios en los extremos. */

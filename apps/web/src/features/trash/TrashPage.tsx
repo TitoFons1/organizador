@@ -1,3 +1,4 @@
+import type { TrashEntity } from '@organizador/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArchiveRestore } from 'lucide-react';
 import { Link } from 'react-router';
@@ -13,7 +14,8 @@ export function TrashPage() {
   const query = useQuery({ queryKey: TRASH_KEY, queryFn: fetchTrash });
 
   const restore = useMutation({
-    mutationFn: ({ entity, id }: { entity: 'subject'; id: string }) => restoreFromTrash(entity, id),
+    mutationFn: ({ entity, id }: { entity: TrashEntity; id: string }) =>
+      restoreFromTrash(entity, id),
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: TRASH_KEY }),

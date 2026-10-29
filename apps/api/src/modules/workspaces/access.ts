@@ -14,6 +14,17 @@ export interface WorkspaceAccess {
   role: WorkspaceRole;
 }
 
+/** Quien pide y en que espacio: lo que necesitan los datos que dependen de la persona. */
+export interface Viewer {
+  workspaceId: string;
+  userId: string;
+}
+
+export const viewerOf = (access: WorkspaceAccess): Viewer => ({
+  workspaceId: access.workspace.id,
+  userId: access.user.id,
+});
+
 export interface AccessOptions {
   /** Espacio concreto al que se quiere acceder. Si falta, se usa el espacio activo del usuario. */
   workspaceId?: string;

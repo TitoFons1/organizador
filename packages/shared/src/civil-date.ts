@@ -95,6 +95,33 @@ export function todayCivil(now: Date = new Date(), timeZone = 'Europe/Madrid'): 
   }).format(now);
 }
 
+/**
+ * Fecha y hora civiles de ahora (`HH:MM`) en la zona del centro. Sirve, por ejemplo, para saber
+ * si una tutoria esta a punto de empezar.
+ */
+export function nowCivil(
+  now: Date = new Date(),
+  timeZone = 'Europe/Madrid',
+): { date: CivilDate; time: string } {
+  const values = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    })
+      .formatToParts(now)
+      .map((part) => [part.type, part.value]),
+  );
+  return {
+    date: `${values.year}-${values.month}-${values.day}`,
+    time: `${values.hour}:${values.minute}`,
+  };
+}
+
 function parts(date: CivilDate): [number, number, number] {
   const match = PATTERN.exec(date);
   if (!match) throw new RangeError(`Fecha civil no valida: ${date}`);

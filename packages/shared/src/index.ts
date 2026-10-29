@@ -5,3 +5,4 @@ export * from './health';
 export * from './schedule';
 export * from './schedule-engine';
 export * from './subjects';
+export * from './tasks';

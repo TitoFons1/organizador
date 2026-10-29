@@ -166,7 +166,7 @@ export function createFakeBackend(
     },
 
     'GET /api/v1/schedule': () => ({
-      body: { slots: state.slots, exceptions: state.exceptions },
+      body: { slots: state.slots, exceptions: state.exceptions, sessionRecords: [] },
     }),
     'POST /api/v1/slots': ({ body }) => {
       const created: Slot = { ...slotInputSchema.parse(body), id: `slot${state.nextId++}` };

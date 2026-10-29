@@ -13,6 +13,9 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    // Las pantallas grandes (los 12 meses del calendario, ~365 botones) pasan de 5 s en Windows
+    // con la cobertura activada. No es un test colgado: es jsdom pintando mucho.
+    testTimeout: 15_000,
     setupFiles: ['./src/test/setup.ts'],
     css: false,
   },

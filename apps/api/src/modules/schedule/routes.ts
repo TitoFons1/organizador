@@ -1,6 +1,9 @@
 import {
+  civilDateSchema,
   exceptionInputSchema,
   scheduleResponseSchema,
+  sessionRecordInputSchema,
+  sessionRecordSchema,
   slotExceptionSchema,
   slotInputSchema,
   slotPatchSchema,
@@ -16,6 +19,7 @@ import {
   deleteException,
   deleteSlot,
   getSchedule,
+  saveSessionRecord,
   updateSlot,
 } from './schedule';
 
@@ -88,6 +92,23 @@ export function registerScheduleRoutes(app: FastifyInstance, deps: { database: D
       const { workspace } = await app.requireWorkspaceAccess(request);
       await deleteException(database, workspace.id, request.params.id);
       return reply.code(204).send();
+    },
+  );
+
+  // ── Notas de una sesion concreta (preparar y repasar una tutoria) ──────────
+  typed.put(
+    '/api/v1/session-records/:slotId/:date',
+    {
+      schema: {
+        params: z.object({ slotId: z.string().min(1).max(64), date: civilDateSchema }),
+        body: sessionRecordInputSchema,
+        response: { 200: sessionRecordSchema },
+      },
+    },
+    async (request) => {
+      const { workspace } = await app.requireWorkspaceAccess(request);
+      const { slotId, date } = request.params;
+      return saveSessionRecord(database, workspace.id, slotId, date, request.body);
     },
   );
 }

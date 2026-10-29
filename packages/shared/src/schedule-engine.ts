@@ -188,6 +188,25 @@ export function expand(range: DateRange, data: ScheduleData): Occurrence[] {
   );
 }
 
+/** Minutos desde las 00:00 de una hora `HH:MM`. */
+export const minutesOf = (time: CivilTime) =>
+  Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+
+/** Minutos antes del inicio desde los que se ofrece "Unirme" (docs/01, 7.2). */
+export const JOIN_WINDOW_MIN = 15;
+
+/** `true` desde 15 minutos antes de una clase que se imparte hoy hasta que termina. */
+export function isJoinable(
+  occurrence: Pick<Occurrence, 'date' | 'start' | 'end' | 'status'>,
+  now: { date: CivilDate; time: CivilTime },
+): boolean {
+  if (occurrence.status !== 'scheduled' || occurrence.date !== now.date) return false;
+  const minute = minutesOf(now.time);
+  return (
+    minute >= minutesOf(occurrence.start) - JOIN_WINDOW_MIN && minute < minutesOf(occurrence.end)
+  );
+}
+
 /** Lunes a domingo de la semana que contiene `date`. */
 export function weekOf(date: CivilDate): DateRange {
   const from = startOfWeek(date);

@@ -247,7 +247,7 @@ export const es = {
     purgeOn: (date: string) => `Se borrará definitivamente el ${date}`,
     restore: 'Restaurar',
     restoreLabel: (name: string) => `Restaurar ${name}`,
-    entity: { subject: 'Asignatura' },
+    entity: { subject: 'Asignatura', task: 'Tarea' },
     loadError: 'No se ha podido cargar la papelera.',
   },
   more: {

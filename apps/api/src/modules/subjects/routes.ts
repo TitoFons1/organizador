@@ -11,6 +11,7 @@ import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import type { Database } from '../../db/client';
+import { viewerOf } from '../workspaces/access';
 import {
   createSubject,
   deleteSubject,
@@ -93,8 +94,8 @@ export function registerSubjectRoutes(app: FastifyInstance, deps: { database: Da
     '/api/v1/subjects/:id/impact',
     { schema: { params: idParams, response: { 200: subjectImpactSchema } } },
     async (request) => {
-      const { workspace } = await app.requireWorkspaceAccess(request);
-      return subjectImpact(database, workspace.id, request.params.id);
+      const viewer = viewerOf(await app.requireWorkspaceAccess(request));
+      return subjectImpact(database, viewer, request.params.id);
     },
   );
 

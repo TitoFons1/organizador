@@ -3,6 +3,7 @@ import {
   EMPTY_SUBJECT_LINKS,
   expand,
   scheduleResponseSchema,
+  sessionRecordSchema,
   slotExceptionSchema,
   slotSchema,
   subjectSchema,
@@ -79,7 +80,7 @@ async function scheduleOf(cookie: string) {
 
 describe('franjas', () => {
   it('el horario empieza vacio', async () => {
-    expect(await scheduleOf(ana)).toEqual({ slots: [], exceptions: [] });
+    expect(await scheduleOf(ana)).toEqual({ slots: [], exceptions: [], sessionRecords: [] });
   });
 
   it('INTEGRACION: con el calendario 2026-27 cargado, el motor da los 27 martes del PDF', async () => {
@@ -221,6 +222,75 @@ describe('excepciones', () => {
     const schedule = await scheduleOf(ana);
     expect(schedule.slots.some((s) => s.id === slot.id)).toBe(false);
     expect(schedule.exceptions.some((e) => e.slotId === slot.id)).toBe(false);
+  });
+});
+
+describe('notas de una tutoria', () => {
+  const notes = {
+    topic: 'Normalizacion',
+    questions: '¿Cuando conviene desnormalizar?',
+    notes: null,
+    recordingUrl: null,
+  };
+
+  it('se guardan por franja y dia, se sustituyen y llegan en /schedule', async () => {
+    const subject = await createSubject(ana, 'Con tutoria');
+    const slot = await createSlot(ana, slotInput(subject.id));
+    const url = `/api/v1/session-records/${slot.id}/2026-10-20`;
+
+    const saved = await call(context, 'PUT', url, ana, notes);
+    expect(saved.statusCode, saved.body).toBe(200);
+    expect(sessionRecordSchema.parse(saved.json())).toMatchObject({
+      slotId: slot.id,
+      date: '2026-10-20',
+      topic: 'Normalizacion',
+    });
+
+    const after = await call(context, 'PUT', url, ana, {
+      ...notes,
+      notes: 'BCNF explicada con ejemplos',
+      recordingUrl: 'https://videos.example.com/t1',
+    });
+    expect(after.statusCode).toBe(200);
+    const records = (await scheduleOf(ana)).sessionRecords.filter((r) => r.slotId === slot.id);
+    expect(records).toEqual([
+      {
+        slotId: slot.id,
+        date: '2026-10-20',
+        topic: 'Normalizacion',
+        questions: '¿Cuando conviene desnormalizar?',
+        notes: 'BCNF explicada con ejemplos',
+        recordingUrl: 'https://videos.example.com/t1',
+      },
+    ]);
+  });
+
+  it('valida la grabacion y la fecha, y Bea no puede tocar las de Ana', async () => {
+    const subject = await createSubject(ana, 'Tutoria privada');
+    const slot = await createSlot(ana, slotInput(subject.id));
+    const bad = await call(context, 'PUT', `/api/v1/session-records/${slot.id}/2026-10-20`, ana, {
+      ...notes,
+      recordingUrl: 'javascript:alert(1)',
+    });
+    expect(bad.statusCode).toBe(400);
+    const badDate = await call(
+      context,
+      'PUT',
+      `/api/v1/session-records/${slot.id}/2026-13-01`,
+      ana,
+      notes,
+    );
+    expect(badDate.statusCode).toBe(400);
+
+    const foreign = await call(
+      context,
+      'PUT',
+      `/api/v1/session-records/${slot.id}/2026-10-20`,
+      bea,
+      notes,
+    );
+    expect(foreign.statusCode).toBe(404);
+    expect(JSON.stringify(await scheduleOf(bea))).not.toContain('Normalizacion');
   });
 });
 

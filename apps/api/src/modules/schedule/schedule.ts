@@ -3,6 +3,8 @@ import {
   slotProblems,
   type ExceptionInput,
   type ScheduleResponse,
+  type SessionRecord,
+  type SessionRecordInput,
   type Slot,
   type SlotException,
   type SlotInput,
@@ -10,11 +12,12 @@ import {
 } from '@organizador/shared';
 import { and, asc, count, eq, inArray, isNull } from 'drizzle-orm';
 import type { Database } from '../../db/client';
-import { scheduleSlot, slotException, subject } from '../../db/schema';
+import { scheduleSlot, sessionRecord, slotException, subject } from '../../db/schema';
 import { HttpError } from '../../http-error';
 
 type SlotRow = typeof scheduleSlot.$inferSelect;
 type ExceptionRow = typeof slotException.$inferSelect;
+type SessionRow = typeof sessionRecord.$inferSelect;
 
 /** Los campos de una franja sin su id: lo que se valida y se guarda. */
 const slotFieldsOf = (row: SlotRow): Omit<Slot, 'id'> => ({
@@ -44,6 +47,15 @@ const toException = (row: ExceptionRow): SlotException => ({
   newStart: row.newStart,
   newEnd: row.newEnd,
   reason: row.reason,
+});
+
+const toSessionRecord = (row: SessionRow): SessionRecord => ({
+  slotId: row.slotId,
+  date: row.date,
+  topic: row.topic,
+  questions: row.questions,
+  notes: row.notes,
+  recordingUrl: row.recordingUrl,
 });
 
 const slotNotFound = () => new HttpError(404, 'Franja no encontrada.', 'SLOT_NOT_FOUND');
@@ -84,17 +96,23 @@ export async function getSchedule(
     .where(and(slotInWorkspace(workspaceId), subjectIsLive))
     .orderBy(asc(scheduleSlot.createdAt));
   const ids = slots.map(({ slot }) => slot.id);
-  const exceptions =
-    ids.length === 0
-      ? []
-      : await db
-          .select()
-          .from(slotException)
-          .where(and(exceptionInWorkspace(workspaceId), inArray(slotException.slotId, ids)))
-          .orderBy(asc(slotException.date));
+  if (ids.length === 0) return { slots: [], exceptions: [], sessionRecords: [] };
+  const [exceptions, sessions] = await Promise.all([
+    db
+      .select()
+      .from(slotException)
+      .where(and(exceptionInWorkspace(workspaceId), inArray(slotException.slotId, ids)))
+      .orderBy(asc(slotException.date)),
+    db
+      .select()
+      .from(sessionRecord)
+      .where(and(eq(sessionRecord.workspaceId, workspaceId), inArray(sessionRecord.slotId, ids)))
+      .orderBy(asc(sessionRecord.date)),
+  ]);
   return {
     slots: slots.map(({ slot }) => toSlot(slot)),
     exceptions: exceptions.map(toException),
+    sessionRecords: sessions.map(toSessionRecord),
   };
 }
 
@@ -186,6 +204,26 @@ export async function deleteException(database: Database, workspaceId: string, i
   if (result.rowsAffected === 0) {
     throw new HttpError(404, 'Cambio no encontrado.', 'EXCEPTION_NOT_FOUND');
   }
+}
+
+/**
+ * Notas de una sesion (tema, preguntas previas, notas, grabacion). Una por franja y dia: guardar
+ * de nuevo las sustituye. Se comparten con el espacio, como el horario.
+ */
+export async function saveSessionRecord(
+  database: Database,
+  workspaceId: string,
+  slotId: string,
+  date: string,
+  input: SessionRecordInput,
+) {
+  await findSlot(database, workspaceId, slotId);
+  const [row] = await database.db
+    .insert(sessionRecord)
+    .values({ ...input, slotId, date, workspaceId })
+    .onConflictDoUpdate({ target: [sessionRecord.slotId, sessionRecord.date], set: input })
+    .returning();
+  return toSessionRecord(row!);
 }
 
 /** Para el impacto de borrar una asignatura (doble confirmacion). */

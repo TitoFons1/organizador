@@ -2,9 +2,12 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { meResponseSchema } from '@organizador/shared';
+import { eq } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../app';
 import { createDb, type Database } from '../db/client';
+import { membership, userSettings } from '../db/schema';
 import { runMigrations } from '../db/migrate';
 import { loadEnv, type Env } from '../env';
 
@@ -149,4 +152,31 @@ export function call(
     headers,
     ...(payload === undefined ? {} : { payload: payload as object }),
   });
+}
+
+export async function whoAmI(context: TestContext, cookie: string) {
+  const response = await get(context, '/api/v1/me', cookie);
+  return meResponseSchema.parse(response.json());
+}
+
+/**
+ * Hasta que M7 tenga la API de grupos: mete a `member` como miembro del espacio de `owner` y lo
+ * deja como su espacio activo, igual que hara "unirse con codigo".
+ */
+export async function joinWorkspaceOf(
+  context: TestContext,
+  ownerCookie: string,
+  memberCookie: string,
+) {
+  const owner = await whoAmI(context, ownerCookie);
+  const member = await whoAmI(context, memberCookie);
+  const { db } = context.database;
+  await db
+    .insert(membership)
+    .values({ workspaceId: owner.workspace.id, userId: member.user.id, role: 'member' });
+  await db
+    .update(userSettings)
+    .set({ activeWorkspaceId: owner.workspace.id })
+    .where(eq(userSettings.userId, member.user.id));
+  return { owner, member };
 }

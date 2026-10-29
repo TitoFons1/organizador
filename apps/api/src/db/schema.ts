@@ -5,9 +5,20 @@ import {
   RECURRENCES,
   SLOT_KINDS,
   SUBJECT_COLORS,
+  TASK_PRIORITIES,
+  TASK_STATUSES,
+  TASK_TYPES,
+  TASK_VISIBILITIES,
   type SubjectLinks,
 } from '@organizador/shared';
-import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import {
+  index,
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+  type AnySQLiteColumn,
+} from 'drizzle-orm/sqlite-core';
 
 const timestamp = (name: string) => integer(name, { mode: 'timestamp_ms' });
 const createdAt = () =>
@@ -264,4 +275,83 @@ export const slotException = sqliteTable(
     index('slot_exception_slot_idx').on(table.slotId, table.date),
     index('slot_exception_workspace_idx').on(table.workspaceId),
   ],
+);
+
+/** Notas de una sesion concreta (tutorias): se comparten con el espacio, como el horario. */
+export const sessionRecord = sqliteTable(
+  'session_record',
+  {
+    slotId: text('slot_id')
+      .notNull()
+      .references(() => scheduleSlot.id, { onDelete: 'cascade' }),
+    date: text('date').notNull(),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspace.id, { onDelete: 'cascade' }),
+    topic: text('topic'),
+    questions: text('questions'),
+    notes: text('notes'),
+    recordingUrl: text('recording_url'),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.slotId, table.date] }),
+    index('session_record_workspace_idx').on(table.workspaceId),
+  ],
+);
+
+// ── Pendientes ──────────────────────────────────────────────────────────────
+
+export const task = sqliteTable(
+  'task',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspace.id, { onDelete: 'cascade' }),
+    // Sin asignatura = apuntada con la captura rapida. Al purgar la asignatura se van con ella.
+    subjectId: text('subject_id').references(() => subject.id, { onDelete: 'cascade' }),
+    // Subtarea (un nivel). Al purgar la tarea madre se van sus subtareas.
+    parentId: text('parent_id').references((): AnySQLiteColumn => task.id, {
+      onDelete: 'cascade',
+    }),
+    // Si se borra la cuenta, las tareas del grupo que creo siguen ahi.
+    createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+    visibility: text('visibility', { enum: TASK_VISIBILITIES }).notNull(),
+    title: text('title').notNull(),
+    description: text('description'),
+    type: text('type', { enum: TASK_TYPES }).notNull(),
+    dueDate: text('due_date'),
+    dueTime: text('due_time'),
+    priority: text('priority', { enum: TASK_PRIORITIES }).notNull(),
+    estimateMin: integer('estimate_min'),
+    // Borrado logico (D5): en la papelera 30 dias antes de purgarse.
+    deletedAt: timestamp('deleted_at'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    index('task_workspace_idx').on(table.workspaceId, table.deletedAt),
+    index('task_parent_idx').on(table.parentId),
+    index('task_subject_idx').on(table.subjectId),
+  ],
+);
+
+/** Estado de cada persona en cada tarea: en un grupo cada una marca la suya. Sin fila = `todo`. */
+export const taskProgress = sqliteTable(
+  'task_progress',
+  {
+    taskId: text('task_id')
+      .notNull()
+      .references(() => task.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    status: text('status', { enum: TASK_STATUSES }).notNull(),
+    doneAt: timestamp('done_at'),
+    updatedAt: updatedAt(),
+  },
+  (table) => [primaryKey({ columns: [table.taskId, table.userId] })],
 );

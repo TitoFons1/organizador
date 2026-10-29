@@ -171,9 +171,32 @@ export type ExceptionInput = z.infer<typeof exceptionInputSchema>;
 export const slotExceptionSchema = exceptionFields.extend({ id: z.string(), slotId: z.string() });
 export type SlotException = z.infer<typeof slotExceptionSchema>;
 
-/** `GET /schedule`: franjas y excepciones en bruto (D3: el cliente calcula las semanas). */
+// ── Notas de una sesion concreta (tutorias) ─────────────────────────────────
+
+export const SESSION_TOPIC_MAX = 200;
+export const SESSION_TEXT_MAX = 4000;
+
+const optionalText = (max: number) => z.string().trim().min(1).max(max).nullable();
+
+/** Lo que se prepara antes de una tutoria y lo que se apunta despues. Todo opcional. */
+export const sessionRecordInputSchema = z.object({
+  topic: optionalText(SESSION_TOPIC_MAX),
+  questions: optionalText(SESSION_TEXT_MAX),
+  notes: optionalText(SESSION_TEXT_MAX),
+  recordingUrl: httpUrlSchema.nullable(),
+});
+export type SessionRecordInput = z.infer<typeof sessionRecordInputSchema>;
+
+export const sessionRecordSchema = sessionRecordInputSchema.extend({
+  slotId: z.string(),
+  date: civilDateSchema,
+});
+export type SessionRecord = z.infer<typeof sessionRecordSchema>;
+
+/** `GET /schedule`: franjas, excepciones y notas en bruto (D3: el cliente calcula las semanas). */
 export const scheduleResponseSchema = z.object({
   slots: z.array(slotSchema),
   exceptions: z.array(slotExceptionSchema),
+  sessionRecords: z.array(sessionRecordSchema),
 });
 export type ScheduleResponse = z.infer<typeof scheduleResponseSchema>;

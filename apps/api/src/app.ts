@@ -17,6 +17,7 @@ import { createRequireWorkspaceAccess } from './modules/workspaces/access';
 import { registerCalendarRoutes } from './modules/calendar/routes';
 import { registerScheduleRoutes } from './modules/schedule/routes';
 import { registerSubjectRoutes } from './modules/subjects/routes';
+import { registerTaskRoutes } from './modules/tasks/routes';
 import { registerTrashRoutes } from './modules/trash/routes';
 import { registerWorkspaceRoutes } from './modules/workspaces/routes';
 import { registerOriginCheck } from './plugins/origin-check';
@@ -97,6 +98,7 @@ export async function buildApp({ database, env, logger = false, authRateLimit }:
   registerCalendarRoutes(plainApp, { database });
   registerSubjectRoutes(plainApp, { database });
   registerScheduleRoutes(plainApp, { database });
+  registerTaskRoutes(plainApp, { database });
   registerTrashRoutes(plainApp, { database });
 
   return plainApp;

@@ -85,7 +85,7 @@ export const subjectDeleteSchema = z.object({ confirmName: z.string() });
 /** Dias que permanece un elemento en la papelera antes de purgarse. */
 export const TRASH_RETENTION_DAYS = 30;
 
-export const trashEntitySchema = z.enum(['subject']);
+export const trashEntitySchema = z.enum(['subject', 'task']);
 export type TrashEntity = z.infer<typeof trashEntitySchema>;
 
 export const trashItemSchema = z.object({

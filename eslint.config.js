@@ -5,7 +5,16 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/coverage/**', '**/node_modules/**', 'apps/api/drizzle/**'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/coverage/**',
+      '**/test-results/**',
+      '**/playwright-report/**',
+      '**/node_modules/**',
+      'apps/api/drizzle/**',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -15,7 +24,7 @@ export default tseslint.config(
     rules: reactHooks.configs.recommended.rules,
   },
   {
-    files: ['apps/api/**/*.ts', 'packages/**/*.ts', '*.config.{js,ts}'],
+    files: ['apps/api/**/*.ts', 'packages/**/*.ts', 'e2e/**/*.ts', '*.config.{js,ts}'],
     languageOptions: { globals: globals.node },
   },
   prettier,

@@ -35,6 +35,23 @@ cambiar `apps/api/src/db/schema.ts`: `npm run db:generate -w @organizador/api` (
 | `npm run format`    | Prettier                                            |
 | `npm run check`     | Formato + lint + tipos + tests (lo mismo que el CI) |
 | `npm run build`     | Build de producción (web y API)                     |
+| `npm run e2e`       | Tests de punta a punta con Playwright (ver abajo)   |
+
+## Tests de punta a punta (Playwright)
+
+Prueban la app como una persona: abren Chromium, pulsan y escriben contra la web, la API y una
+base de datos reales, en un móvil de 360 px y en un escritorio de 1280 px. Están en `e2e/tests`.
+
+```bash
+npx playwright install chromium   # una vez por equipo: descarga el navegador
+npm run e2e                       # todos, sin ventana
+npm run e2e -- --ui               # modo visual: ves cada paso y puedes repetirlos
+npm run e2e -- --project movil    # solo el móvil (o `escritorio`)
+```
+
+Levantan su propia API (puerto 3100) y web (5174) con una BD nueva en `apps/api/data/e2e.db`, así
+que no interfieren con `npm run dev`. Si algo falla, el informe con capturas y trazas se abre con
+`npx playwright show-report e2e/playwright-report`.
 
 ## Estructura
 
@@ -42,6 +59,7 @@ cambiar `apps/api/src/db/schema.ts`: `npm run db:generate -w @organizador/api` (
 apps/api         Fastify + Drizzle (SQLite/libSQL)
 apps/web         React + Vite + Tailwind
 packages/shared  Esquemas zod y (en M4) el motor de horario
+e2e/             Tests de punta a punta (Playwright)
 data/            Calendario del curso y fixtures de pruebas
 docs/            Análisis, diseño y plan
 ```

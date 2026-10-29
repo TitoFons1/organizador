@@ -102,6 +102,7 @@ Cada hito termina con la app **ejecutándose y probada**, y una demo corta.
 - CRUD, color de paleta, profesor, enlaces (aula virtual, NotebookLM, repo), reordenar.
 - **Eliminar con doble confirmación** (impacto → escribir nombre) y **Archivar**. Papelera.
 - **Hecho cuando**: puedo crear 6 asignaturas, archivar una, borrar otra y restaurarla desde la papelera; e2e en móvil.
+- e2e: `e2e/tests/subjects.spec.ts` recorre este criterio con Playwright en móvil (360 px) y escritorio (1280 px), también en el CI.
 
 ### M3 · Calendario del curso — *2 sesiones*
 - `Term` y `CalendarMark` con CRUD; importador de `data/calendario-2026-2027.seed.json`.

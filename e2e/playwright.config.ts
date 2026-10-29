@@ -12,8 +12,7 @@ const isCI = Boolean(process.env.CI);
  */
 export default defineConfig({
   testDir: './tests',
-  // Un solo worker: todos los tests comparten el fichero SQLite y el limite de 10 peticiones de
-  // auth por minuto y por IP (cada test registra su propia cuenta).
+  // Un solo worker: todos los tests comparten el fichero SQLite.
   workers: 1,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
@@ -41,6 +40,8 @@ export default defineConfig({
         DATABASE_URL: 'file:./data/e2e.db',
         APP_URL: WEB_URL,
         ALLOW_SIGNUP: 'true',
+        // Cada test registra su propia cuenta y todos llegan desde la misma IP.
+        AUTH_RATE_LIMIT_PER_MINUTE: '1000',
       },
       reuseExistingServer: false,
     },

@@ -25,6 +25,8 @@ const envSchema = z
       .optional()
       .transform((value) => value || undefined),
     ALLOW_SIGNUP: booleanFlag,
+    // Registros, logins y logouts por minuto y por IP. Solo los tests e2e lo suben.
+    AUTH_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).max(100_000).default(10),
   })
   .superRefine((env, ctx) => {
     if (env.BETTER_AUTH_SECRET !== undefined && env.BETTER_AUTH_SECRET.length < 32) {

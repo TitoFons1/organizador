@@ -25,6 +25,12 @@ describe('loadEnv', () => {
     expect(loadEnv({ NODE_ENV: 'test' }).ALLOW_SIGNUP).toBe(true);
   });
 
+  it('el limite de intentos de auth es 10 por minuto salvo que se cambie', () => {
+    expect(loadEnv({}).AUTH_RATE_LIMIT_PER_MINUTE).toBe(10);
+    expect(loadEnv({ AUTH_RATE_LIMIT_PER_MINUTE: '500' }).AUTH_RATE_LIMIT_PER_MINUTE).toBe(500);
+    expect(() => loadEnv({ AUTH_RATE_LIMIT_PER_MINUTE: '0' })).toThrow(/AUTH_RATE_LIMIT/);
+  });
+
   it('rechaza un valor de ALLOW_SIGNUP que no sea true/false', () => {
     expect(() => loadEnv({ ALLOW_SIGNUP: 'no' })).toThrow(/ALLOW_SIGNUP/);
   });

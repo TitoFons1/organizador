@@ -87,7 +87,10 @@ export async function buildApp({ database, env, logger = false, authRateLimit }:
 
   registerAuthRoutes(plainApp, {
     auth,
-    writeLimit: authRateLimit?.write ?? { max: 10, timeWindow: '1 minute' },
+    writeLimit: authRateLimit?.write ?? {
+      max: env.AUTH_RATE_LIMIT_PER_MINUTE,
+      timeWindow: '1 minute',
+    },
     readLimit: authRateLimit?.read ?? { max: 120, timeWindow: '1 minute' },
   });
   registerWorkspaceRoutes(plainApp, { database });

@@ -1,12 +1,17 @@
 import {
   EMPTY_SUBJECT_LINKS,
+  exceptionInputSchema,
   markInputSchema,
   markPatchSchema,
   normalizeSeed,
+  slotInputSchema,
+  slotPatchSchema,
   subjectInputSchema,
   termInputSchema,
   termPatchSchema,
   type Mark,
+  type Slot,
+  type SlotException,
   type Subject,
   type SubjectInput,
   type Term,
@@ -22,13 +27,21 @@ type Handlers = Parameters<typeof mockApi>[0];
  * sin servidor. Cada hito anade aqui sus endpoints.
  */
 export function createFakeBackend(
-  initial: { subjects?: Subject[]; marks?: Mark[]; terms?: Term[] } = {},
+  initial: {
+    subjects?: Subject[];
+    marks?: Mark[];
+    terms?: Term[];
+    slots?: Slot[];
+    exceptions?: SlotException[];
+  } = {},
 ) {
   const state = {
     subjects: [...(initial.subjects ?? [])],
     trash: [] as TrashItem[],
     marks: [...(initial.marks ?? [])],
     terms: [...(initial.terms ?? [])],
+    slots: [...(initial.slots ?? [])],
+    exceptions: [...(initial.exceptions ?? [])],
     nextId: 1,
   };
 
@@ -149,6 +162,44 @@ export function createFakeBackend(
     },
     'DELETE /api/v1/terms/:id': ({ params }) => {
       state.terms = state.terms.filter((t) => t.id !== params.id);
+      return { status: 204 };
+    },
+
+    'GET /api/v1/schedule': () => ({
+      body: { slots: state.slots, exceptions: state.exceptions },
+    }),
+    'POST /api/v1/slots': ({ body }) => {
+      const created: Slot = { ...slotInputSchema.parse(body), id: `slot${state.nextId++}` };
+      state.slots.push(created);
+      return { status: 201, body: created };
+    },
+    'PATCH /api/v1/slots/:id': ({ params, body }) => {
+      const current = state.slots.find((slot) => slot.id === params.id);
+      if (!current) return { status: 404, body: { code: 'SLOT_NOT_FOUND' } };
+      const updated: Slot = { ...current, ...slotPatchSchema.parse(body) };
+      state.slots = state.slots.map((slot) => (slot.id === current.id ? updated : slot));
+      return { body: updated };
+    },
+    'DELETE /api/v1/slots/:id': ({ params }) => {
+      state.slots = state.slots.filter((slot) => slot.id !== params.id);
+      state.exceptions = state.exceptions.filter((e) => e.slotId !== params.id);
+      return { status: 204 };
+    },
+    'POST /api/v1/slots/:id/exceptions': ({ params, body }) => {
+      const input = exceptionInputSchema.parse(body);
+      // Como el servidor: un dia no se cancela o mueve dos veces.
+      const clash = state.exceptions.some(
+        (e) => e.slotId === params.id && e.date === input.date && e.kind !== 'extra',
+      );
+      if (input.kind !== 'extra' && clash) {
+        return { status: 409, body: { code: 'EXCEPTION_EXISTS' } };
+      }
+      const created: SlotException = { ...input, id: `exc${state.nextId++}`, slotId: params.id! };
+      state.exceptions.push(created);
+      return { status: 201, body: created };
+    },
+    'DELETE /api/v1/exceptions/:id': ({ params }) => {
+      state.exceptions = state.exceptions.filter((e) => e.id !== params.id);
       return { status: 204 };
     },
 

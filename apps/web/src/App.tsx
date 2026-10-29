@@ -7,9 +7,10 @@ import { MorePage } from './features/account/MorePage';
 import { GuestOnly, RequireAuth } from './features/auth/guards';
 import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
-import { CalendarPage } from './features/calendar/CalendarPage';
 import { createQueryClient } from './features/auth/session';
-import { ServerStatus } from './features/health/ServerStatus';
+import { CalendarPage } from './features/calendar/CalendarPage';
+import { PanelPage } from './features/panel/PanelPage';
+import { SlotsPage } from './features/schedule/SlotsPage';
 import { DeleteSubjectPage } from './features/subjects/DeleteSubjectPage';
 import { SubjectFormPage } from './features/subjects/SubjectFormPage';
 import { SubjectsPage } from './features/subjects/SubjectsPage';
@@ -34,19 +35,13 @@ export const routes: RouteObject[] = [
           {
             element: <AppShell />,
             children: [
-              {
-                index: true,
-                element: (
-                  <PagePlaceholder title={es.nav.panel} milestone="M6">
-                    <ServerStatus />
-                  </PagePlaceholder>
-                ),
-              },
+              { index: true, element: <PanelPage /> },
               { path: 'calendario', element: <CalendarPage /> },
               { path: 'asignaturas', element: <SubjectsPage /> },
               { path: 'asignaturas/nueva', element: <SubjectFormPage /> },
               { path: 'asignaturas/:id/editar', element: <SubjectFormPage /> },
               { path: 'asignaturas/:id/eliminar', element: <DeleteSubjectPage /> },
+              { path: 'asignaturas/:id/horario', element: <SlotsPage /> },
               { path: 'papelera', element: <TrashPage /> },
               { path: 'notas', element: <PagePlaceholder title={es.nav.notes} milestone="M7" /> },
               { path: 'mas', element: <MorePage /> },

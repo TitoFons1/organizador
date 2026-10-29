@@ -1,6 +1,6 @@
 # 02 · Plan de implementación — Organizador DAM
 
-> Complementa a `01-analisis-y-diseno.md`. Estado: M0–M3 hechos; el siguiente es M4.
+> Complementa a `01-analisis-y-diseno.md`. Estado: M0–M4 hechos; el siguiente es M5.
 > Tamaños orientativos en **sesiones** (≈ 2–3 h de trabajo conjunto). No son una promesa: sirven para ordenar.
 
 ## 1. Alcance del MVP (congelado)
@@ -111,12 +111,14 @@ Cada hito termina con la app **ejecutándose y probada**, y una demo corta.
 - **Hecho cuando**: el calendario 2026-27 queda cargado y editable, y la leyenda coincide con tu Excel.
 - e2e: `e2e/tests/calendar.spec.ts` carga el 2026-27, pinta y edita una marca y comprueba que persiste (móvil y escritorio). Las marcas duran como mucho 366 días.
 
-### M4 · Horario y motor de recurrencia — *3 sesiones* (el hito más delicado)
+### M4 · Horario y motor de recurrencia — *3 sesiones* (el hito más delicado) ✅ hecho
 - `ScheduleSlot` (`weekly`/`dates`, `intervalWeeks`, `anchorDate`) y `SlotException` (cancelar/mover/extra).
 - `schedule-engine` en `packages/shared` con tests de: semanas alternas, ancla distinta, festivo que cae en clase, vacaciones, exámenes, cancelaciones, mover, recurrencia `dates`, cambio de hora (25 oct y 28 mar), solapes.
 - **Tests dorados con datos reales** (`data/fixtures/`): "martes lectivos" de Programación = los 27 martes del PDF; "lunes lectivos" de BBDD = 26 lunes; las 15 fechas sueltas del ejemplo con recurrencia `dates`.
 - UI: formulario de franjas ("martes 16–18, cada 2 semanas, empezando el…"), vista semanal, acción "Cancelar esta clase".
 - **Hecho cuando**: la semana del 12 oct muestra 12–14 oct como festivos y las demás clases correctas; los tests del motor ≥ 95 % de cobertura.
+- Hecho así: motor en `packages/shared/src/schedule-engine.ts` (cobertura ≥ 95 % exigida en el CI con `npm run test:coverage`); API `GET /schedule`, `/slots`, `/slots/:id/exceptions`, `/exceptions/:id`; franjas en *Asignaturas → Horario*; la semana en el Panel (`/?semana=AAAA-MM-DD`) con cancelar, mover y deshacer. e2e: `e2e/tests/schedule.spec.ts`.
+- Decisiones: precedencia excepción > calendario > regla; la paridad quincenal es fija desde el ancla; una clase movida o extra se mantiene aunque el día esté bloqueado; las franjas se borran sin papelera (se rehacen en segundos); las asignaturas archivadas no salen en la semana.
 
 ### M5 · Pendientes y tutorías — *2–3 sesiones*
 - `Task` con tipo, fecha, prioridad, estimación, subtareas; `TaskProgress` (estado por usuario).

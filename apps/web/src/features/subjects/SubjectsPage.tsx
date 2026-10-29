@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Archive,
   ArchiveRestore,
+  CalendarClock,
   ChevronDown,
   ChevronUp,
   ExternalLink,
@@ -133,6 +134,7 @@ export function SubjectsPage() {
             >
               <ChevronDown aria-hidden className="size-5" />
             </IconButton>
+            <ScheduleLink subject={subject} />
             <EditLink subject={subject} />
             <IconButton
               label={es.subjects.archive(subject.name)}
@@ -169,6 +171,19 @@ export function SubjectsPage() {
         </details>
       ) : null}
     </div>
+  );
+}
+
+function ScheduleLink({ subject }: { subject: Subject }) {
+  return (
+    <Link
+      to={`/asignaturas/${subject.id}/horario`}
+      aria-label={es.schedule.open(subject.name)}
+      title={es.schedule.open(subject.name)}
+      className={buttonClasses('ghost', 'size-11 px-0')}
+    >
+      <CalendarClock aria-hidden className="size-5" />
+    </Link>
   );
 }
 

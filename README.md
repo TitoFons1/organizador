@@ -58,7 +58,7 @@ que no interfieren con `npm run dev`. Si algo falla, el informe con capturas y t
 ```
 apps/api         Fastify + Drizzle (SQLite/libSQL)
 apps/web         React + Vite + Tailwind
-packages/shared  Esquemas zod y (en M4) el motor de horario
+packages/shared  Esquemas zod, fechas civiles y el motor de horario
 e2e/             Tests de punta a punta (Playwright)
 data/            Calendario del curso y fixtures de pruebas
 docs/            Análisis, diseño y plan

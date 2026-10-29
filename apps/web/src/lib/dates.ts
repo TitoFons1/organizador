@@ -6,6 +6,18 @@ const long = new Intl.DateTimeFormat('es-ES', { dateStyle: 'long', timeZone: 'UT
 const full = new Intl.DateTimeFormat('es-ES', { dateStyle: 'full', timeZone: 'UTC' });
 const short = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 const month = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+const dayOfWeek = new Intl.DateTimeFormat('es-ES', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'UTC',
+});
+const longRange = new Intl.DateTimeFormat('es-ES', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
 
 const toDate = (date: CivilDate) => new Date(`${date}T00:00:00Z`);
 
@@ -22,3 +34,10 @@ export const formatMonth = (value: string) => month.format(toDate(`${value}-01`)
 export function formatRange(start: CivilDate, end: CivilDate) {
   return start === end ? formatShort(start) : `${formatShort(start)} – ${formatShort(end)}`;
 }
+
+/** lunes, 12 oct */
+export const formatWeekday = (date: CivilDate) => dayOfWeek.format(toDate(date));
+
+/** 12–18 de octubre de 2026 (o 28 de septiembre–4 de octubre de 2026) */
+export const formatDateRange = (start: CivilDate, end: CivilDate) =>
+  longRange.formatRange(toDate(start), toDate(end));

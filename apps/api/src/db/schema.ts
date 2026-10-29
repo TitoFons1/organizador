@@ -1,5 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import { MARK_KINDS, SUBJECT_COLORS, type SubjectLinks } from '@organizador/shared';
+import {
+  EXCEPTION_KINDS,
+  MARK_KINDS,
+  RECURRENCES,
+  SLOT_KINDS,
+  SUBJECT_COLORS,
+  type SubjectLinks,
+} from '@organizador/shared';
 import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 const timestamp = (name: string) => integer(name, { mode: 'timestamp_ms' });
@@ -194,4 +201,67 @@ export const calendarMark = sqliteTable(
     createdAt: createdAt(),
   },
   (table) => [index('calendar_mark_workspace_idx').on(table.workspaceId, table.startDate)],
+);
+
+// ── Horario ─────────────────────────────────────────────────────────────────
+// Fechas y horas civiles (D4): AAAA-MM-DD y HH:MM. `workspace_id` se repite desde la asignatura
+// para filtrar por espacio sin joins (D1). Al purgar una asignatura se borran en cascada.
+
+export const scheduleSlot = sqliteTable(
+  'schedule_slot',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspace.id, { onDelete: 'cascade' }),
+    subjectId: text('subject_id')
+      .notNull()
+      .references(() => subject.id, { onDelete: 'cascade' }),
+    kind: text('kind', { enum: SLOT_KINDS }).notNull(),
+    recurrence: text('recurrence', { enum: RECURRENCES }).notNull(),
+    // 1 = lunes ... 7 = domingo (ISO). Solo en `weekly`.
+    weekday: integer('weekday'),
+    intervalWeeks: integer('interval_weeks').notNull().default(1),
+    anchorDate: text('anchor_date'),
+    dates: text('dates', { mode: 'json' }).$type<string[] | null>(),
+    startTime: text('start_time').notNull(),
+    endTime: text('end_time').notNull(),
+    location: text('location'),
+    meetingUrl: text('meeting_url'),
+    validFrom: text('valid_from'),
+    validTo: text('valid_to'),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index('schedule_slot_workspace_idx').on(table.workspaceId),
+    index('schedule_slot_subject_idx').on(table.subjectId),
+  ],
+);
+
+export const slotException = sqliteTable(
+  'slot_exception',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspace.id, { onDelete: 'cascade' }),
+    slotId: text('slot_id')
+      .notNull()
+      .references(() => scheduleSlot.id, { onDelete: 'cascade' }),
+    date: text('date').notNull(),
+    kind: text('kind', { enum: EXCEPTION_KINDS }).notNull(),
+    newDate: text('new_date'),
+    newStart: text('new_start'),
+    newEnd: text('new_end'),
+    reason: text('reason'),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index('slot_exception_slot_idx').on(table.slotId, table.date),
+    index('slot_exception_workspace_idx').on(table.workspaceId),
+  ],
 );

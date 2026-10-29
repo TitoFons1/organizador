@@ -3,6 +3,7 @@ import { and, asc, eq, gte, isNotNull, isNull, lt, sql } from 'drizzle-orm';
 import type { Database } from '../../db/client';
 import { subject } from '../../db/schema';
 import { HttpError } from '../../http-error';
+import { countSlots } from '../schedule/schedule';
 
 type SubjectRow = typeof subject.$inferSelect;
 
@@ -140,7 +141,8 @@ export async function subjectImpact(
   id: string,
 ): Promise<SubjectImpact> {
   const row = await findActive(database, workspaceId, id);
-  return { subject: { id: row.id, name: row.name }, tasks: 0, notes: 0, slots: 0 };
+  const slots = await countSlots(database, workspaceId, id);
+  return { subject: { id: row.id, name: row.name }, tasks: 0, notes: 0, slots };
 }
 
 /** Compara sin importar mayusculas ni espacios en los extremos. */

@@ -15,6 +15,7 @@ import { createAuth } from './modules/auth/auth';
 import { registerAuthRoutes, type RateLimitRule } from './modules/auth/routes';
 import { createRequireWorkspaceAccess } from './modules/workspaces/access';
 import { registerCalendarRoutes } from './modules/calendar/routes';
+import { registerScheduleRoutes } from './modules/schedule/routes';
 import { registerSubjectRoutes } from './modules/subjects/routes';
 import { registerTrashRoutes } from './modules/trash/routes';
 import { registerWorkspaceRoutes } from './modules/workspaces/routes';
@@ -92,6 +93,7 @@ export async function buildApp({ database, env, logger = false, authRateLimit }:
   registerWorkspaceRoutes(plainApp, { database });
   registerCalendarRoutes(plainApp, { database });
   registerSubjectRoutes(plainApp, { database });
+  registerScheduleRoutes(plainApp, { database });
   registerTrashRoutes(plainApp, { database });
 
   return plainApp;

@@ -1,6 +1,6 @@
 # 02 · Plan de implementación — Organizador DAM
 
-> Complementa a `01-analisis-y-diseno.md`. Estado: M0–M4 hechos; el siguiente es M5.
+> Complementa a `01-analisis-y-diseno.md`. Estado: M0–M5 hechos; el siguiente es M6.
 > Tamaños orientativos en **sesiones** (≈ 2–3 h de trabajo conjunto). No son una promesa: sirven para ordenar.
 
 ## 1. Alcance del MVP (congelado)
@@ -120,12 +120,14 @@ Cada hito termina con la app **ejecutándose y probada**, y una demo corta.
 - Hecho así: motor en `packages/shared/src/schedule-engine.ts` (cobertura ≥ 95 % exigida en el CI con `npm run test:coverage`); API `GET /schedule`, `/slots`, `/slots/:id/exceptions`, `/exceptions/:id`; franjas en *Asignaturas → Horario*; la semana en el Panel (`/?semana=AAAA-MM-DD`) con cancelar, mover y deshacer. e2e: `e2e/tests/schedule.spec.ts`.
 - Decisiones: precedencia excepción > calendario > regla; la paridad quincenal es fija desde el ancla; una clase movida o extra se mantiene aunque el día esté bloqueado; las franjas se borran sin papelera (se rehacen en segundos); las asignaturas archivadas no salen en la semana.
 
-### M5 · Pendientes y tutorías — *2–3 sesiones*
+### M5 · Pendientes y tutorías — *2–3 sesiones* ✅ hecho
 - `Task` con tipo, fecha, prioridad, estimación, subtareas; `TaskProgress` (estado por usuario).
 - Clasificación Atrasadas / Hoy / Esta semana / Más adelante / Sin fecha (función pura con tests).
 - Tutoría: tema, preguntas previas, notas, enlace de grabación (`SessionRecord`); botón **Unirme**.
 - Captura rápida (＋) en una sola línea.
 - **Hecho cuando**: marco una tarea hecha y cambia de grupo al instante; una tarea vencida aparece en Atrasadas.
+- Hecho así: clasificación en `packages/shared/src/tasks.ts`; API `/tasks`, `/tasks/:id/progress` y `/session-records/:slotId/:date`; pendientes en el Panel, botón ＋ de captura rápida en toda la app, ficha en `/pendientes/:id` con subtareas, y preparación/notas de tutoría con **Unirme** en la semana. e2e: `e2e/tests/tasks.spec.ts`.
+- Decisiones: «Esta semana» es hasta el domingo; «Atrasadas» se decide por fecha, no por hora; la captura rápida crea la tarea sin fecha ni asignatura; las subtareas son de un nivel y heredan asignatura y visibilidad; solo la autora cambia quién ve una tarea; las notas de tutoría se comparten con el espacio; **Unirme** aparece desde 15 min antes hasta el final. Pendiente: `meetingUrlOverride` (enlace distinto para una sesión concreta).
 
 ### M6 · Panel principal y detalle — *3 sesiones*
 - Panel móvil (tira semanal + agenda + pendientes) y escritorio (rejilla semanal + 4 columnas).

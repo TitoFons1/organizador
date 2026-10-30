@@ -5,6 +5,7 @@ import { Link } from 'react-router';
 import { Button, buttonClasses } from '../../components/ui/Button';
 import { es } from '../../i18n/es';
 import { fetchTrash, restoreFromTrash, SUBJECTS_KEY, TRASH_KEY } from '../subjects/api';
+import { TASKS_KEY } from '../tasks/api';
 
 const formatDate = (iso: string) =>
   new Intl.DateTimeFormat('es-ES', { dateStyle: 'long' }).format(new Date(iso));
@@ -20,6 +21,7 @@ export function TrashPage() {
       Promise.all([
         queryClient.invalidateQueries({ queryKey: TRASH_KEY }),
         queryClient.invalidateQueries({ queryKey: SUBJECTS_KEY, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: TASKS_KEY, refetchType: 'all' }),
       ]),
   });
 

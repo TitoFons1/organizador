@@ -44,6 +44,8 @@ export default defineConfig({
         AUTH_RATE_LIMIT_PER_MINUTE: '1000',
       },
       reuseExistingServer: false,
+      // Arrancar en frio en Windows (o tras suspender el equipo) puede pasar del minuto.
+      timeout: 120_000,
     },
     {
       command: `npx vite --port ${WEB_PORT} --strictPort`,
@@ -51,6 +53,8 @@ export default defineConfig({
       url: WEB_URL,
       env: { API_PROXY_TARGET: `http://127.0.0.1:${API_PORT}` },
       reuseExistingServer: false,
+      // Arrancar en frio en Windows (o tras suspender el equipo) puede pasar del minuto.
+      timeout: 120_000,
     },
   ],
 });

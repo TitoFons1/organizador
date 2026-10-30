@@ -1,26 +1,32 @@
 import {
   isCivilDate,
   isCivilTime,
+  isJoinable,
   type ExceptionInput,
   type Occurrence,
+  type SessionRecord,
   type Slot,
   type Subject,
 } from '@organizador/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ellipsis, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
-import { Button, IconButton } from '../../components/ui/Button';
+import { Button, buttonClasses, IconButton } from '../../components/ui/Button';
 import { Field } from '../../components/ui/Field';
 import { es } from '../../i18n/es';
 import { cn } from '../../lib/cn';
 import { formatShort } from '../../lib/dates';
 import { SubjectBadge } from '../subjects/SubjectBadge';
 import { createException, deleteException, SCHEDULE_KEY } from './api';
+import { SessionForm } from './SessionForm';
 
 interface OccurrenceCardProps {
   occurrence: Occurrence;
   subject: Subject;
   slot: Slot | undefined;
+  /** Notas de esta sesion (tutorias), si las hay. */
+  record: SessionRecord | undefined;
+  now: { date: string; time: string };
   overlaps: boolean;
   open: boolean;
   onToggle: () => void;
@@ -51,6 +57,8 @@ export function OccurrenceCard({
   occurrence,
   subject,
   slot,
+  record,
+  now,
   overlaps,
   open,
   onToggle,
@@ -83,15 +91,32 @@ export function OccurrenceCard({
           </p>
           <p className="text-sm text-fg-muted">{details.join(' · ')}</p>
           {line ? <p className="text-sm font-medium">{line}</p> : null}
+          {record?.topic ? <p className="text-sm">{texts.topic(record.topic)}</p> : null}
           {overlaps ? <p className="text-sm text-danger">{texts.overlap}</p> : null}
           {live && slot?.meetingUrl ? (
+            // Desde 15 minutos antes, la videollamada pasa a ser el boton principal.
             <a
               href={slot.meetingUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1 inline-flex min-h-8 items-center gap-1 text-sm font-medium text-primary underline"
+              className={
+                isJoinable(occurrence, now)
+                  ? buttonClasses('primary', 'mt-2')
+                  : 'mt-1 inline-flex min-h-8 items-center gap-1 text-sm font-medium text-primary underline'
+              }
             >
-              {texts.meeting}
+              {isJoinable(occurrence, now) ? texts.join : texts.meeting}
+              <ExternalLink aria-hidden className="size-3.5" />
+            </a>
+          ) : null}
+          {record?.recordingUrl ? (
+            <a
+              href={record.recordingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 ml-3 inline-flex min-h-8 items-center gap-1 text-sm font-medium text-primary underline"
+            >
+              {texts.session.recording}
               <ExternalLink aria-hidden className="size-3.5" />
             </a>
           ) : null}
@@ -106,49 +131,80 @@ export function OccurrenceCard({
           </IconButton>
         )}
       </div>
-      {open ? <OccurrenceActions occurrence={occurrence} onDone={onToggle} /> : null}
+      {open ? (
+        <OccurrenceActions occurrence={occurrence} record={record} onDone={onToggle} />
+      ) : null}
     </li>
   );
 }
 
-function OccurrenceActions({ occurrence, onDone }: { occurrence: Occurrence; onDone: () => void }) {
+function OccurrenceActions({
+  occurrence,
+  record,
+  onDone,
+}: {
+  occurrence: Occurrence;
+  record: SessionRecord | undefined;
+  onDone: () => void;
+}) {
+  const live = occurrence.status === 'scheduled';
+  return (
+    <div className="mt-3 flex flex-col gap-4 border-t border-border pt-3">
+      {occurrence.kind === 'tutoria' && live ? (
+        <SessionForm slotId={occurrence.slotId} date={occurrence.date} record={record} />
+      ) : null}
+      {occurrence.exceptionId ? (
+        <UndoChange exceptionId={occurrence.exceptionId} onDone={onDone} />
+      ) : live ? (
+        <ChangeClass occurrence={occurrence} onDone={onDone} />
+      ) : null}
+    </div>
+  );
+}
+
+function useScheduleChange(onDone: () => void) {
   const queryClient = useQueryClient();
+  return async () => {
+    await queryClient.invalidateQueries({ queryKey: SCHEDULE_KEY });
+    onDone();
+  };
+}
+
+/** Quita la excepcion: la clase vuelve a ser la de la regla. */
+function UndoChange({ exceptionId, onDone }: { exceptionId: string; onDone: () => void }) {
+  const refresh = useScheduleChange(onDone);
+  const undo = useMutation({ mutationFn: deleteException, onSuccess: refresh });
+  return (
+    <div className="flex flex-col gap-2">
+      {undo.isError ? (
+        <p role="alert" className="text-sm text-danger">
+          {es.schedule.actionError}
+        </p>
+      ) : null}
+      <Button
+        variant="secondary"
+        onClick={() => undo.mutate(exceptionId)}
+        disabled={undo.isPending}
+        className="self-start"
+      >
+        {texts.undo}
+      </Button>
+    </div>
+  );
+}
+
+/** Cancelar esta clase (con motivo) o moverla a otro dia y hora. */
+function ChangeClass({ occurrence, onDone }: { occurrence: Occurrence; onDone: () => void }) {
   const [reason, setReason] = useState('');
   const [newDate, setNewDate] = useState(occurrence.date);
   const [newStart, setNewStart] = useState(occurrence.start);
   const [newEnd, setNewEnd] = useState(occurrence.end);
   const [invalid, setInvalid] = useState(false);
-
-  const done = async () => {
-    await queryClient.invalidateQueries({ queryKey: SCHEDULE_KEY });
-    onDone();
-  };
+  const refresh = useScheduleChange(onDone);
   const change = useMutation({
     mutationFn: (input: ExceptionInput) => createException(occurrence.slotId, input),
-    onSuccess: done,
+    onSuccess: refresh,
   });
-  const undo = useMutation({ mutationFn: deleteException, onSuccess: done });
-
-  if (occurrence.exceptionId) {
-    const exceptionId = occurrence.exceptionId;
-    return (
-      <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
-        {undo.isError ? (
-          <p role="alert" className="text-sm text-danger">
-            {es.schedule.actionError}
-          </p>
-        ) : null}
-        <Button
-          variant="secondary"
-          onClick={() => undo.mutate(exceptionId)}
-          disabled={undo.isPending}
-          className="self-start"
-        >
-          {texts.undo}
-        </Button>
-      </div>
-    );
-  }
 
   const base = { date: occurrence.date, reason: reason.trim() === '' ? null : reason.trim() };
   const cancel = () =>
@@ -161,7 +217,7 @@ function OccurrenceActions({ occurrence, onDone }: { occurrence: Occurrence; onD
   };
 
   return (
-    <div className="mt-3 flex flex-col gap-3 border-t border-border pt-3">
+    <div className="flex flex-col gap-3">
       <Field
         label={texts.reason}
         value={reason}

@@ -6,7 +6,6 @@ import {
   findOverlaps,
   isCivilDate,
   marksOn,
-  todayCivil,
   weekday,
   weekOf,
   type CivilDate,
@@ -19,6 +18,7 @@ import { Button, buttonClasses, IconButton } from '../../components/ui/Button';
 import { es } from '../../i18n/es';
 import { cn } from '../../lib/cn';
 import { formatDateRange, formatWeekday } from '../../lib/dates';
+import { useNow } from '../../lib/use-now';
 import { CALENDAR_KEY, fetchCalendar } from '../calendar/api';
 import { KIND_SYMBOL, kindStyle } from '../calendar/kind-style';
 import { fetchSubjects, SUBJECTS_KEY } from '../subjects/api';
@@ -35,7 +35,8 @@ const occurrenceKey = (o: { slotId: string; date: string; exceptionId: string | 
  */
 export function WeekView() {
   const [params, setParams] = useSearchParams();
-  const today = todayCivil();
+  const now = useNow();
+  const today = now.date;
   const requested = params.get('semana');
   const week = weekOf(requested && isCivilDate(requested) ? requested : today);
   const [open, setOpen] = useState<string | null>(null);
@@ -108,6 +109,8 @@ export function WeekView() {
   const { marks } = calendar.data;
   const occurrences = expand(week, { slots, exceptions: schedule.data.exceptions, marks });
   const overlapping = new Set(findOverlaps(occurrences).flat());
+  const recordOf = (slotId: string, date: string) =>
+    schedule.data.sessionRecords.find((r) => r.slotId === slotId && r.date === date);
 
   if (active.size === 0 || slots.length === 0) {
     return (
@@ -177,6 +180,8 @@ export function WeekView() {
                         occurrence={occurrence}
                         subject={active.get(occurrence.subjectId)!}
                         slot={slotById.get(occurrence.slotId)}
+                        record={recordOf(occurrence.slotId, occurrence.date)}
+                        now={now}
                         overlaps={overlapping.has(occurrence)}
                         open={open === key}
                         onToggle={() => setOpen(open === key ? null : key)}

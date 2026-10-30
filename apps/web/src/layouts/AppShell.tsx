@@ -1,6 +1,7 @@
 import { BookOpen, CalendarDays, Ellipsis, LayoutDashboard, NotebookPen } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
 import { AccountCard } from '../features/auth/AccountCard';
+import { QuickAdd } from '../features/tasks/QuickAdd';
 import { es } from '../i18n/es';
 import { cn } from '../lib/cn';
 
@@ -43,9 +44,11 @@ export function AppShell() {
         </div>
       </aside>
 
-      <main className="px-4 pt-6 pb-28 md:px-8 md:pb-10">
+      {/* Hueco abajo: la barra (movil) y el boton + no deben tapar lo ultimo de la pagina. */}
+      <main className="px-4 pt-6 pb-40 md:px-8 md:pb-28">
         <Outlet />
       </main>
+      <QuickAdd />
 
       <nav
         aria-label="Principal"

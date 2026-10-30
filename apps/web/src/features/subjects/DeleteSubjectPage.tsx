@@ -5,6 +5,7 @@ import { Button, buttonClasses } from '../../components/ui/Button';
 import { Field } from '../../components/ui/Field';
 import { es } from '../../i18n/es';
 import { ApiError } from '../../lib/api';
+import { TASKS_KEY } from '../tasks/api';
 import {
   deleteSubject,
   fetchSubjectImpact,
@@ -39,6 +40,8 @@ export function DeleteSubjectPage() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: SUBJECTS_KEY, refetchType: 'all' }),
         queryClient.invalidateQueries({ queryKey: TRASH_KEY, refetchType: 'all' }),
+        // Sus tareas se van con ella a la papelera.
+        queryClient.invalidateQueries({ queryKey: TASKS_KEY, refetchType: 'all' }),
       ]);
       void navigate('/asignaturas', { replace: true });
     },

@@ -4,16 +4,22 @@ import {
   markInputSchema,
   markPatchSchema,
   normalizeSeed,
+  sessionRecordInputSchema,
   slotInputSchema,
   slotPatchSchema,
   subjectInputSchema,
+  taskInputSchema,
+  taskPatchSchema,
+  taskProgressInputSchema,
   termInputSchema,
   termPatchSchema,
   type Mark,
+  type SessionRecord,
   type Slot,
   type SlotException,
   type Subject,
   type SubjectInput,
+  type Task,
   type Term,
   type TrashItem,
 } from '@organizador/shared';
@@ -33,6 +39,8 @@ export function createFakeBackend(
     terms?: Term[];
     slots?: Slot[];
     exceptions?: SlotException[];
+    sessionRecords?: SessionRecord[];
+    tasks?: Task[];
   } = {},
 ) {
   const state = {
@@ -42,6 +50,9 @@ export function createFakeBackend(
     terms: [...(initial.terms ?? [])],
     slots: [...(initial.slots ?? [])],
     exceptions: [...(initial.exceptions ?? [])],
+    sessionRecords: [...(initial.sessionRecords ?? [])],
+    tasks: [...(initial.tasks ?? [])],
+    deletedTasks: [] as Task[],
     nextId: 1,
   };
 
@@ -166,7 +177,11 @@ export function createFakeBackend(
     },
 
     'GET /api/v1/schedule': () => ({
-      body: { slots: state.slots, exceptions: state.exceptions, sessionRecords: [] },
+      body: {
+        slots: state.slots,
+        exceptions: state.exceptions,
+        sessionRecords: state.sessionRecords,
+      },
     }),
     'POST /api/v1/slots': ({ body }) => {
       const created: Slot = { ...slotInputSchema.parse(body), id: `slot${state.nextId++}` };
@@ -203,11 +218,82 @@ export function createFakeBackend(
       return { status: 204 };
     },
 
+    'PUT /api/v1/session-records/:slotId/:date': ({ params, body }) => {
+      const saved: SessionRecord = {
+        ...sessionRecordInputSchema.parse(body),
+        slotId: params.slotId!,
+        date: params.date!,
+      };
+      state.sessionRecords = [
+        ...state.sessionRecords.filter(
+          (r) => !(r.slotId === saved.slotId && r.date === saved.date),
+        ),
+        saved,
+      ];
+      return { body: saved };
+    },
+
+    'GET /api/v1/tasks': () => ({ body: { tasks: state.tasks } }),
+    'POST /api/v1/tasks': ({ body }) => {
+      const input = taskInputSchema.parse(body);
+      const mother = state.tasks.find((t) => t.id === input.parentId);
+      const created: Task = {
+        ...input,
+        // Como el servidor: la subtarea va con la asignatura y la visibilidad de su madre.
+        ...(mother ? { subjectId: mother.subjectId, visibility: mother.visibility } : {}),
+        id: `task${state.nextId++}`,
+        createdBy: ANA_ME.user.id,
+        status: 'todo',
+        doneAt: null,
+      };
+      state.tasks.push(created);
+      return { status: 201, body: created };
+    },
+    'PATCH /api/v1/tasks/:id': ({ params, body }) => {
+      const current = state.tasks.find((t) => t.id === params.id);
+      if (!current) return { status: 404, body: { code: 'TASK_NOT_FOUND' } };
+      const updated: Task = { ...current, ...taskPatchSchema.parse(body) };
+      state.tasks = state.tasks.map((t) => (t.id === current.id ? updated : t));
+      return { body: updated };
+    },
+    'PUT /api/v1/tasks/:id/progress': ({ params, body }) => {
+      const current = state.tasks.find((t) => t.id === params.id);
+      if (!current) return { status: 404, body: { code: 'TASK_NOT_FOUND' } };
+      const { status } = taskProgressInputSchema.parse(body);
+      const doneAt = status === 'done' ? '2026-10-14T10:00:00.000Z' : null;
+      const updated: Task = { ...current, status, doneAt };
+      state.tasks = state.tasks.map((t) => (t.id === current.id ? updated : t));
+      return { body: updated };
+    },
+    'DELETE /api/v1/tasks/:id': ({ params }) => {
+      // Se van ella y sus subtareas; a la papelera solo la que se borra.
+      const gone = state.tasks.filter((t) => t.id === params.id || t.parentId === params.id);
+      state.tasks = state.tasks.filter((t) => !gone.includes(t));
+      state.deletedTasks.push(...gone);
+      const task = gone.find((t) => t.id === params.id);
+      if (task) {
+        state.trash.push({
+          entity: 'task',
+          id: task.id,
+          name: task.title,
+          deletedAt: '2026-10-14T10:00:00.000Z',
+          purgeAt: '2026-11-13T10:00:00.000Z',
+        });
+      }
+      return { status: 204 };
+    },
+
     'GET /api/v1/trash': () => ({ body: { items: state.trash } }),
     'POST /api/v1/trash/:entity/:id/restore': ({ params }) => {
       const item = state.trash.find((entry) => entry.id === params.id);
       if (!item) return { status: 404, body: { message: 'No esta', code: 'TRASH_ITEM_NOT_FOUND' } };
       state.trash = state.trash.filter((entry) => entry !== item);
+      if (item.entity === 'task') {
+        const back = state.deletedTasks.filter((t) => t.id === item.id || t.parentId === item.id);
+        state.deletedTasks = state.deletedTasks.filter((t) => !back.includes(t));
+        state.tasks.push(...back);
+        return { status: 204 };
+      }
       state.subjects.push({
         id: item.id,
         name: item.name,

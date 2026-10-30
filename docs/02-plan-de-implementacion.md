@@ -1,6 +1,6 @@
 # 02 · Plan de implementación — Organizador DAM
 
-> Complementa a `01-analisis-y-diseno.md`. Estado: M0–M5 hechos; el siguiente es M6.
+> Complementa a `01-analisis-y-diseno.md`. Estado: M0–M6 hechos; el siguiente es M7.
 > Tamaños orientativos en **sesiones** (≈ 2–3 h de trabajo conjunto). No son una promesa: sirven para ordenar.
 
 ## 1. Alcance del MVP (congelado)
@@ -129,11 +129,13 @@ Cada hito termina con la app **ejecutándose y probada**, y una demo corta.
 - Hecho así: clasificación en `packages/shared/src/tasks.ts`; API `/tasks`, `/tasks/:id/progress` y `/session-records/:slotId/:date`; pendientes en el Panel, botón ＋ de captura rápida en toda la app, ficha en `/pendientes/:id` con subtareas, y preparación/notas de tutoría con **Unirme** en la semana. e2e: `e2e/tests/tasks.spec.ts`.
 - Decisiones: «Esta semana» es hasta el domingo; «Atrasadas» se decide por fecha, no por hora; la captura rápida crea la tarea sin fecha ni asignatura; las subtareas son de un nivel y heredan asignatura y visibilidad; solo la autora cambia quién ve una tarea; las notas de tutoría se comparten con el espacio; **Unirme** aparece desde 15 min antes hasta el final. Pendiente: `meetingUrlOverride` (enlace distinto para una sesión concreta).
 
-### M6 · Panel principal y detalle — *3 sesiones*
+### M6 · Panel principal y detalle — *3 sesiones* ✅ hecho
 - Panel móvil (tira semanal + agenda + pendientes) y escritorio (rejilla semanal + 4 columnas).
 - Detalle de asignatura con pestañas; vista **Hoy** con marcador "ahora".
 - Estados vacíos, skeletons, modo oscuro.
 - **Hecho cuando**: en un móvil de 360 px se ve todo sin desplazamiento horizontal y en un monitor de 1280 px se ve semana + pendientes sin hacer scroll.
+- Hecho así: Panel con tira semanal + agenda del día + pendientes con fichas (móvil) y rejilla semanal + 4 columnas (escritorio, a partir de 768 px); línea «Ahora»; detalle de asignatura en `/asignaturas/:id` con pestañas Resumen, Tareas, Tutorías, Notas (M7), Horario y Ajustes; esqueletos de carga; tema claro/oscuro elegible en *Más* (por dispositivo). e2e: `e2e/tests/panel.spec.ts` (sin desplazamiento horizontal en 11 pantallas y semana + pendientes a la vista en 1280×720).
+- Decisiones: el tema se guarda en el dispositivo (`localStorage`), no en `user_settings.theme`; el estado del servidor pasa a *Más*.
 
 ### M7 · Grupos y notas — *3–4 sesiones*
 - Crear grupo, código, unirse, salir (con copia de estructura/personal), expulsar, regenerar; límites de intentos.

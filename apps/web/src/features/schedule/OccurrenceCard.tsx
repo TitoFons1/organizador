@@ -11,6 +11,7 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ellipsis, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { Button, buttonClasses, IconButton } from '../../components/ui/Button';
 import { Field } from '../../components/ui/Field';
 import { es } from '../../i18n/es';
@@ -87,7 +88,10 @@ export function OccurrenceCard({
               !live && 'text-fg-muted',
             )}
           >
-            {subject.name}
+            {/* Tocar la asignatura abre su detalle (docs/01, 7.2). */}
+            <Link to={`/asignaturas/${subject.id}`} className="hover:underline">
+              {subject.name}
+            </Link>
           </p>
           <p className="text-sm text-fg-muted">{details.join(' · ')}</p>
           {line ? <p className="text-sm font-medium">{line}</p> : null}

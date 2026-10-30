@@ -7,15 +7,24 @@ import { ANA_ME, HEALTH_OK, mockApi, UNAUTHORIZED } from './test/mock-api';
 import { renderApp } from './test/render';
 
 describe('AppShell', () => {
-  it('muestra el panel y el estado del servidor cuando la API responde', async () => {
+  it('abre en el panel, con la semana y los pendientes', async () => {
+    mockApi({ 'GET /api/v1/me': { body: ANA_ME } });
+
+    renderApp();
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Panel' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Semana' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Pendientes' })).toBeInTheDocument();
+  });
+
+  it('en "Más" se ve el estado del servidor', async () => {
     mockApi({
       'GET /api/v1/me': { body: ANA_ME },
       'GET /api/v1/health': { body: HEALTH_OK },
     });
 
-    renderApp();
+    renderApp('/mas');
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Panel' })).toBeInTheDocument();
     expect(await screen.findByText('Conectado')).toBeInTheDocument();
   });
 
@@ -25,7 +34,7 @@ describe('AppShell', () => {
       'GET /api/v1/health': { status: 500, body: { message: 'boom' } },
     });
 
-    renderApp();
+    renderApp('/mas');
 
     expect(await screen.findByText('No se puede contactar con el servidor')).toBeInTheDocument();
   });

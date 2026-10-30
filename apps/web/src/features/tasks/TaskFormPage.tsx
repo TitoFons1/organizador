@@ -14,7 +14,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { Button, buttonClasses, IconButton } from '../../components/ui/Button';
 import { Field } from '../../components/ui/Field';
 import { Select } from '../../components/ui/Select';
@@ -71,19 +71,26 @@ function TaskForm({ task, subjects }: { task?: Task; subjects: Subject[] }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const me = useMe();
+  const [params] = useSearchParams();
   const isSubtask = task !== undefined && task.parentId !== null;
   const isGroup = me.data?.workspace.kind === 'group';
+  // Desde el detalle de una asignatura (`?asignatura=`) viene ya elegida y se vuelve a ella.
+  const fromSubject = subjects.find((subject) => subject.id === params.get('asignatura'));
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
-    defaultValues: taskFormDefaults(task),
+    defaultValues: {
+      ...taskFormDefaults(task),
+      ...(task === undefined && fromSubject ? { subjectId: fromSubject.id } : {}),
+    },
   });
+  const backTo = fromSubject ? `/asignaturas/${fromSubject.id}/tareas` : '/';
 
   const save = useMutation({
     mutationFn: (values: TaskFormValues) =>
       task ? updateTask(task.id, toTaskFields(values)) : createTask(toTaskInput(values)),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: TASKS_KEY });
-      void navigate('/');
+      void navigate(backTo);
     },
   });
 
@@ -167,7 +174,7 @@ function TaskForm({ task, subjects }: { task?: Task; subjects: Subject[] }) {
           <Button type="submit" disabled={save.isPending} className="flex-1">
             {save.isPending ? es.common.saving : es.common.save}
           </Button>
-          <Link to="/" className={buttonClasses('secondary')}>
+          <Link to={backTo} className={buttonClasses('secondary')}>
             {es.common.cancel}
           </Link>
         </div>

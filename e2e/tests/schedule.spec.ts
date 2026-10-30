@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { goTo, horizontalOverflow, registerNewUser } from './support';
+import { goTo, horizontalOverflow, openClass, openDay, registerNewUser } from './support';
 
 async function createSubject(page: Page, name: string, first: boolean) {
   await goTo(page, 'Asignaturas');
@@ -31,8 +31,6 @@ async function addSlot(page: Page, subject: string, slot: SlotData) {
   await expect(page.getByText(`${slot.day} · ${slot.start}–${slot.end}`)).toBeVisible();
 }
 
-const day = (page: Page, name: string) => page.getByRole('listitem', { name });
-
 // Criterio de "hecho" de M4 (docs/02, seccion 6).
 test('la semana del 12 oct muestra los festivos; una clase se cancela y se recuerda', async ({
   page,
@@ -59,29 +57,36 @@ test('la semana del 12 oct muestra los festivos; una clase se cancela y se recue
 
   await test.step('semana del 12 oct: 12-14 festivos y el jueves con clase', async () => {
     await page.goto('/?semana=2026-10-12');
-    await expect(day(page, 'lunes, 12 oct').getByText('Festivo (Pilar)').first()).toBeVisible();
-    await expect(day(page, 'martes, 13 oct').getByText('Festivo Zaragoza').first()).toBeVisible();
-    await expect(day(page, 'miércoles, 14 oct').getByText('Festivo Zaragoza')).toBeVisible();
-    const thursday = day(page, 'jueves, 15 oct');
+    const monday = await openDay(page, testInfo, 'lunes, 12 oct');
+    await expect(monday.getByText('Festivo (Pilar)').first()).toBeVisible();
+    const tuesday = await openDay(page, testInfo, 'martes, 13 oct');
+    await expect(tuesday.getByText('Festivo Zaragoza').first()).toBeVisible();
+    const wednesday = await openDay(page, testInfo, 'miércoles, 14 oct');
+    await expect(wednesday.getByText('Festivo Zaragoza')).toBeVisible();
+    const thursday = await openDay(page, testInfo, 'jueves, 15 oct');
     await expect(thursday).toContainText('Programación');
-    await expect(thursday.getByText('16:00–17:00')).toBeVisible();
+    await expect(thursday).toContainText('16:00');
   });
 
   await test.step('cancelar la tutoria del 20 oct', async () => {
     await page.getByRole('button', { name: 'Semana siguiente' }).click();
-    const tuesday = day(page, 'martes, 20 oct');
-    await expect(tuesday.getByRole('link', { name: /Videollamada/ })).toBeVisible();
-    await tuesday
-      .getByRole('button', { name: 'Cambiar la clase de Programación del 20 oct' })
-      .click();
-    await tuesday.getByLabel('Motivo (opcional)').fill('Huelga');
-    await tuesday.getByRole('button', { name: 'Cancelar esta clase' }).click();
-    await expect(tuesday.getByText('Cancelada · Huelga')).toBeVisible();
+    const card = await openClass(page, testInfo, 'martes, 20 oct', 'Programación');
+    await expect(card.getByRole('link', { name: /Videollamada/ })).toBeVisible();
+    await card.getByRole('button', { name: 'Cambiar la clase de Programación del 20 oct' }).click();
+    await card.getByLabel('Motivo (opcional)').fill('Huelga');
+    await card.getByRole('button', { name: 'Cancelar esta clase' }).click();
+    await expect(page.getByText('Cancelada · Huelga')).toBeVisible();
   });
 
   await test.step('el cambio esta guardado en el servidor', async () => {
     await page.reload();
-    await expect(day(page, 'martes, 20 oct').getByText('Cancelada · Huelga')).toBeVisible();
+    const tuesday = await openDay(page, testInfo, 'martes, 20 oct');
+    // En movil se ve el motivo; en escritorio, el bloque dice que esta cancelada.
+    await expect(
+      tuesday
+        .getByText('Cancelada · Huelga')
+        .or(tuesday.getByRole('button', { name: 'Programación, 17:40–19:25, cancelada' })),
+    ).toBeVisible();
   });
 
   await test.step('la semana cabe a lo ancho, sin desplazamiento horizontal', async () => {

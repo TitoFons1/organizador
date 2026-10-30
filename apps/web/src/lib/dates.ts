@@ -12,6 +12,12 @@ const dayOfWeek = new Intl.DateTimeFormat('es-ES', {
   month: 'short',
   timeZone: 'UTC',
 });
+const shortRange = new Intl.DateTimeFormat('es-ES', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
 const longRange = new Intl.DateTimeFormat('es-ES', {
   day: 'numeric',
   month: 'long',
@@ -41,3 +47,7 @@ export const formatWeekday = (date: CivilDate) => dayOfWeek.format(toDate(date))
 /** 12–18 de octubre de 2026 (o 28 de septiembre–4 de octubre de 2026) */
 export const formatDateRange = (start: CivilDate, end: CivilDate) =>
   longRange.formatRange(toDate(start), toDate(end));
+
+/** 12–18 oct 2026 (o 26 oct – 1 nov 2026): cabe en una linea del movil. */
+export const formatDateRangeShort = (start: CivilDate, end: CivilDate) =>
+  shortRange.formatRange(toDate(start), toDate(end));

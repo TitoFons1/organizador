@@ -183,7 +183,7 @@ describe('tutorias', () => {
     const user = userEvent.setup();
     renderApp('/?semana=2026-10-20');
 
-    const tuesday = await screen.findByRole('listitem', { name: 'martes, 20 oct' });
+    const tuesday = await screen.findByRole('region', { name: 'martes, 20 oct' });
     expect(within(tuesday).getByRole('link', { name: /Unirme/ })).toHaveAttribute(
       'href',
       'https://meet.example.com/pro',
@@ -216,7 +216,7 @@ describe('tutorias', () => {
     createFakeBackend({ subjects: [programacion], slots: [tutoria] }).install();
     renderApp('/?semana=2026-10-20');
 
-    const tuesday = await screen.findByRole('listitem', { name: 'martes, 20 oct' });
+    const tuesday = await screen.findByRole('region', { name: 'martes, 20 oct' });
     expect(within(tuesday).getByRole('link', { name: /Videollamada/ })).toBeVisible();
     expect(within(tuesday).queryByRole('link', { name: /Unirme/ })).toBeNull();
   });

@@ -210,13 +210,17 @@ describe('cerrar sesion', () => {
     await user.type(screen.getByLabelText('Contraseña'), 'contrasena-de-ana');
     await user.click(screen.getByRole('button', { name: 'Entrar' }));
     await screen.findByRole('heading', { level: 1, name: 'Panel' });
-    await screen.findByText('Conectado');
-    expect(client.getQueryData(['health'])).toBeDefined();
+    // El panel ha pedido las asignaturas: quedan en la cache de esta persona.
+    await waitFor(() =>
+      expect(client.getQueryCache().find({ queryKey: ['subjects'] })).toBeDefined(),
+    );
 
     await user.click(screen.getAllByRole('button', { name: 'Cerrar sesión' })[0]!);
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Entrar' })).toBeInTheDocument();
-    await waitFor(() => expect(client.getQueryData(['health'])).toBeUndefined());
+    await waitFor(() =>
+      expect(client.getQueryCache().find({ queryKey: ['subjects'] })).toBeUndefined(),
+    );
     expect(sentBodies(api, 'POST', '/api/v1/auth/sign-out')).toHaveLength(1);
   });
 });

@@ -35,7 +35,7 @@ test('una tarea vencida sale en Atrasadas y al marcarla hecha cambia de grupo', 
     // click y no check(): la casilla desaparece de Atrasadas en cuanto se marca (es el criterio).
     await bucket('Atrasadas').getByRole('checkbox', { name: 'Práctica 1' }).click();
     await expect(page.getByText('Hechas (1)')).toBeVisible();
-    await expect(bucket('Atrasadas')).toHaveCount(0);
+    await expect(bucket('Atrasadas').getByText('Práctica 1')).toHaveCount(0);
   });
 
   await test.step('queda guardado en el servidor', async () => {

@@ -1,7 +1,7 @@
 import { normalizeSeed, type Mark, type Slot } from '@organizador/shared';
 import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import seed from '../../../../../data/calendario-2026-2027.seed.json';
 import { createFakeBackend, subjectFixture } from '../../test/fake-backend';
 import { sentBodies } from '../../test/mock-api';
@@ -44,7 +44,7 @@ const bbddMonday = slot({
   endTime: '18:00',
 });
 
-const day = (name: string) => screen.getByRole('listitem', { name });
+const day = (name: string) => screen.getByRole('region', { name });
 const setValue = (label: string, value: string) =>
   fireEvent.change(screen.getByLabelText(label), { target: { value } });
 
@@ -146,13 +146,15 @@ describe('franjas de una asignatura', () => {
   });
 });
 
-describe('semana en el panel', () => {
+describe('semana en el panel (movil)', () => {
   const backend = () =>
     createFakeBackend({
       subjects: [programacion, bases],
       slots: [proTuesday, bbddMonday],
       marks: COURSE,
     });
+  const pick = (user: ReturnType<typeof userEvent.setup>, name: string) =>
+    user.click(screen.getByRole('button', { name: new RegExp(`^${name}`) }));
 
   it('CRITERIO DE M4: la semana del 12 oct muestra los festivos y el jueves normal', async () => {
     const thursday = slot({ id: 'slot-ent', subjectId: 's-bbdd', weekday: 4 });
@@ -161,39 +163,65 @@ describe('semana en el panel', () => {
       slots: [proTuesday, bbddMonday, thursday],
       marks: COURSE,
     }).install();
-    renderApp('/?semana=2026-10-14');
+    const user = userEvent.setup();
+    renderApp('/?semana=2026-10-14&dia=2026-10-12');
 
-    // El encabezado sale ya mientras carga: se espera a que esten los dias.
-    const monday = await screen.findByRole('listitem', { name: 'lunes, 12 oct' });
-    expect(screen.getByRole('heading', { name: /12.18 de octubre de 2026/ })).toBeVisible();
+    // El encabezado sale ya mientras carga: se espera a que este el dia.
+    const monday = await screen.findByRole('region', { name: 'lunes, 12 oct' });
+    expect(screen.getByRole('heading', { name: /12.18 oct 2026/ })).toBeVisible();
     expect(within(monday).getAllByText('Festivo (Pilar)')).toHaveLength(2); // dia y clase
+    // Las clases bloqueadas no se pueden cambiar.
+    expect(within(monday).queryByRole('button', { name: /Cambiar la clase/ })).toBeNull();
+    // La tira cuenta las clases que se imparten: solo el jueves tiene.
+    expect(screen.getByRole('button', { name: 'lunes, 12 oct' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'jueves, 15 oct, 1 clase' })).toBeVisible();
+
+    await pick(user, 'martes, 13 oct');
     expect(within(day('martes, 13 oct')).getAllByText('Festivo Zaragoza')).toHaveLength(2);
+    await pick(user, 'miércoles, 14 oct');
     expect(within(day('miércoles, 14 oct')).getByText('Festivo Zaragoza')).toBeVisible();
+    await pick(user, 'jueves, 15 oct');
     const jueves = day('jueves, 15 oct');
     expect(within(jueves).getByText('Bases de Datos')).toBeVisible();
     expect(within(jueves).getByText('17:40–19:25')).toBeVisible();
-    // Las clases bloqueadas no se pueden cambiar.
-    expect(within(monday).queryByRole('button', { name: /Cambiar la clase/ })).toBeNull();
   });
 
-  it('navega de semana y muestra el enlace de la videollamada en la tutoria', async () => {
+  it('cambia de semana con las flechas y deslizando, y enlaza la videollamada', async () => {
     backend().install();
     const user = userEvent.setup();
     renderApp('/?semana=2026-10-14');
 
     await user.click(await screen.findByRole('button', { name: 'Semana siguiente' }));
+    expect(screen.getByRole('heading', { name: /19.25 oct 2026/ })).toBeVisible();
+    await pick(user, 'martes, 20 oct');
     const tuesday = day('martes, 20 oct');
     expect(within(tuesday).getByText('17:40–19:25 · Tutoría')).toBeVisible();
     expect(within(tuesday).getByRole('link', { name: /Videollamada/ })).toHaveAttribute(
       'href',
       'https://meet.example.com/pro',
     );
+
+    // Deslizar la tira hacia la izquierda pasa a la semana siguiente.
+    const strip = screen.getByRole('group', { name: 'Días de la semana' });
+    fireEvent.touchStart(strip, { touches: [{ clientX: 300 }] });
+    fireEvent.touchEnd(strip, { changedTouches: [{ clientX: 100 }] });
+    expect(await screen.findByRole('heading', { name: /26 oct.*1 nov 2026/ })).toBeVisible();
+  });
+
+  it('el nombre de la asignatura lleva a su detalle', async () => {
+    backend().install();
+    renderApp('/?semana=2026-10-20&dia=2026-10-20');
+    const tuesday = await screen.findByRole('region', { name: 'martes, 20 oct' });
+    expect(within(tuesday).getByRole('link', { name: 'Programación' })).toHaveAttribute(
+      'href',
+      '/asignaturas/s-pro',
+    );
   });
 
   it('cancelar una clase la deja visible como cancelada, y se puede deshacer', async () => {
     const api = backend().install();
     const user = userEvent.setup();
-    renderApp('/?semana=2026-10-20');
+    renderApp('/?semana=2026-10-20&dia=2026-10-20');
 
     await user.click(
       await screen.findByRole('button', { name: 'Cambiar la clase de Programación del 20 oct' }),
@@ -224,7 +252,7 @@ describe('semana en el panel', () => {
   it('mover una clase: el dia original avisa y la clase aparece en el nuevo dia y hora', async () => {
     backend().install();
     const user = userEvent.setup();
-    renderApp('/?semana=2026-10-20');
+    renderApp('/?semana=2026-10-20&dia=2026-10-20');
 
     await user.click(
       await screen.findByRole('button', { name: 'Cambiar la clase de Programación del 20 oct' }),
@@ -235,9 +263,40 @@ describe('semana en el panel', () => {
     await user.click(screen.getByRole('button', { name: 'Mover la clase' }));
 
     expect(await within(day('martes, 20 oct')).findByText('Movida al 22 oct')).toBeVisible();
+    await pick(user, 'jueves, 22 oct');
     const thursday = day('jueves, 22 oct');
     expect(within(thursday).getByText('Movida desde el 20 oct')).toBeVisible();
     expect(within(thursday).getByText('10:00–11:30 · Tutoría')).toBeVisible();
+  });
+
+  it('hoy marca "ahora" entre lo que ya empezo y lo que falta', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-20T15:00:00Z')); // martes 20, 17:00 en Madrid
+    try {
+      const early = slot({
+        id: 'slot-early',
+        subjectId: 's-bbdd',
+        startTime: '16:00',
+        endTime: '17:00',
+      });
+      createFakeBackend({
+        subjects: [programacion, bases],
+        slots: [proTuesday, early],
+        marks: COURSE,
+      }).install();
+      renderApp('/');
+
+      const today = await screen.findByRole('region', { name: 'martes, 20 oct' });
+      const items = within(today)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent ?? '');
+      expect(items).toHaveLength(3);
+      expect(items[0]).toContain('Bases de Datos');
+      expect(items[1]).toBe('Ahora · 17:00');
+      expect(items[2]).toContain('Programación');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('sin asignaturas invita a crearlas', async () => {
@@ -245,6 +304,57 @@ describe('semana en el panel', () => {
     renderApp('/');
     expect(
       await screen.findByText('Añade tus asignaturas y su horario para ver aquí tus clases.'),
+    ).toBeVisible();
+  });
+});
+
+describe('semana en el panel (escritorio)', () => {
+  beforeEach(() => {
+    // jsdom no tiene matchMedia: se simula una pantalla ancha (se deshace en setup.ts).
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: true,
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+  });
+
+  it('rejilla con los 7 dias; un bloque se elige y muestra la clase con sus acciones', async () => {
+    createFakeBackend({
+      subjects: [programacion, bases],
+      slots: [proTuesday, bbddMonday],
+      marks: COURSE,
+    }).install();
+    const user = userEvent.setup();
+    renderApp('/?semana=2026-10-19');
+
+    const monday = await screen.findByRole('region', { name: 'lunes, 19 oct' });
+    expect(screen.getByRole('region', { name: 'sábado, 24 oct' })).toBeVisible();
+    expect(screen.getByRole('region', { name: 'domingo, 25 oct' })).toBeVisible();
+    await user.click(within(monday).getByRole('button', { name: 'Bases de Datos, 16:00–18:00' }));
+
+    const chosen = screen.getByRole('region', { name: 'Clase seleccionada' });
+    expect(within(chosen).getByText('16:00–18:00')).toBeVisible();
+    await user.click(
+      within(chosen).getByRole('button', { name: 'Cambiar la clase de Bases de Datos del 19 oct' }),
+    );
+    await user.click(within(chosen).getByRole('button', { name: 'Cancelar esta clase' }));
+
+    // La clase sigue elegida tras el cambio (su clave no depende de la excepcion).
+    expect(await within(chosen).findByText('Cancelada')).toBeVisible();
+    expect(
+      within(monday).getByRole('button', { name: 'Bases de Datos, 16:00–18:00, cancelada' }),
+    ).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('los bloques de un festivo dicen que no hay clase', async () => {
+    createFakeBackend({ subjects: [bases], slots: [bbddMonday], marks: COURSE }).install();
+    renderApp('/?semana=2026-10-12');
+
+    const monday = await screen.findByRole('region', { name: 'lunes, 12 oct' });
+    expect(within(monday).getByText('Festivo (Pilar)')).toBeVisible();
+    expect(
+      within(monday).getByRole('button', { name: 'Bases de Datos, 16:00–18:00, sin clase' }),
     ).toBeVisible();
   });
 });

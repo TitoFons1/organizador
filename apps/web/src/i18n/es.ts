@@ -165,7 +165,6 @@ export const es = {
     actionError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
   },
   schedule: {
-    title: (subject: string) => `Horario de ${subject}`,
     open: (subject: string) => `Horario de ${subject}`,
     intro:
       'Cada franja es una regla: el calendario del curso quita los festivos, vacaciones y exámenes.',

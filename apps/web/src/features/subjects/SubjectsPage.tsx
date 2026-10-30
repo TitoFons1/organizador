@@ -224,7 +224,11 @@ function SubjectCard({ subject, children }: { subject: Subject; children: React.
       <div className="flex items-start gap-3">
         <SubjectBadge color={subject.color} label={subject.shortName} className="mt-0.5 shrink-0" />
         <div className="min-w-0 flex-1">
-          <h2 className="font-medium break-words">{subject.name}</h2>
+          <h2 className="font-medium break-words">
+            <Link to={`/asignaturas/${subject.id}`} className="hover:underline">
+              {subject.name}
+            </Link>
+          </h2>
           {subject.teacher ? (
             <p className="text-sm text-fg-muted">
               {es.subjects.teacher}: {subject.teacher}

@@ -54,8 +54,12 @@ describe('franjas de una asignatura', () => {
     const user = userEvent.setup();
     renderApp('/asignaturas/s-pro/horario');
 
-    expect(await screen.findByRole('heading', { name: 'Horario de Programación' })).toBeVisible();
-    expect(screen.getByText('Esta asignatura aún no tiene franjas de horario.')).toBeVisible();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Programación' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Horario' })).toHaveAttribute('aria-current', 'page');
+    // La cabecera llega antes que el horario: se espera a la pestana.
+    expect(
+      await screen.findByText('Esta asignatura aún no tiene franjas de horario.'),
+    ).toBeVisible();
 
     await user.click(screen.getByRole('button', { name: 'Añadir franja' }));
     await user.selectOptions(screen.getByLabelText('Tipo'), 'Tutoría');

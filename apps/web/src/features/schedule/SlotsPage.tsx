@@ -1,22 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useParams } from 'react-router';
-import { Button, buttonClasses, IconButton } from '../../components/ui/Button';
+import { Button, IconButton } from '../../components/ui/Button';
+import { Skeleton } from '../../components/ui/Skeleton';
 import { es } from '../../i18n/es';
-import { fetchSubjects, SUBJECTS_KEY } from '../subjects/api';
-import { SubjectBadge } from '../subjects/SubjectBadge';
+import { useSubject } from '../subjects/detail/SubjectDetailLayout';
 import { deleteSlot, fetchSchedule, SCHEDULE_KEY } from './api';
 import { describeSlot } from './slot-form';
 import { SlotForm } from './SlotForm';
 
 const NEW = 'new';
 
-/** Las franjas de una asignatura: cada una es una regla ("martes 16-18, cada 2 semanas..."). */
+/** Pestana Horario: las franjas de la asignatura, cada una una regla ("martes 16-18, cada 2..."). */
 export function SlotsPage() {
-  const { id = '' } = useParams();
+  const subject = useSubject();
   const queryClient = useQueryClient();
-  const subjects = useQuery({ queryKey: SUBJECTS_KEY, queryFn: fetchSubjects });
   const schedule = useQuery({ queryKey: SCHEDULE_KEY, queryFn: fetchSchedule });
   // Por id: un refresco de la consulta crea objetos nuevos y no debe cerrar el formulario.
   const [editing, setEditing] = useState<string | null>(null);
@@ -26,31 +24,14 @@ export function SlotsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: SCHEDULE_KEY }),
   });
 
-  if (subjects.isPending || schedule.isPending) {
-    return <p className="text-fg-muted">{es.common.loading}</p>;
-  }
-  const subject = subjects.data?.find((candidate) => candidate.id === id);
-  if (!subject || schedule.isError) {
-    return (
-      <div className="flex flex-col items-start gap-3">
-        <p role="alert">{subject ? es.schedule.loadError : es.subjects.notFound}</p>
-        <Link to="/asignaturas" className={buttonClasses('secondary')}>
-          {es.common.back}
-        </Link>
-      </div>
-    );
-  }
+  if (schedule.isPending) return <Skeleton lines={2} />;
+  if (schedule.isError) return <p role="alert">{es.schedule.loadError}</p>;
 
   const slots = schedule.data.slots.filter((slot) => slot.subjectId === subject.id);
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4">
-      <header className="flex flex-col gap-2">
-        <SubjectBadge color={subject.color} label={subject.shortName} className="self-start" />
-        <h1 className="text-2xl font-semibold">{es.schedule.title(subject.name)}</h1>
-        <p className="text-fg-muted">{es.schedule.intro}</p>
-      </header>
-
+    <div className="flex flex-col gap-4">
+      <p className="text-fg-muted">{es.schedule.intro}</p>
       {remove.isError ? (
         <p role="alert" className="text-sm text-danger">
           {es.schedule.actionError}
@@ -102,10 +83,6 @@ export function SlotsPage() {
           {es.schedule.add}
         </Button>
       )}
-
-      <Link to="/asignaturas" className={buttonClasses('ghost', 'self-start')}>
-        {es.common.back}
-      </Link>
     </div>
   );
 }

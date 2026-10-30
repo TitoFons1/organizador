@@ -13,6 +13,14 @@ import { PanelPage } from './features/panel/PanelPage';
 import { SlotsPage } from './features/schedule/SlotsPage';
 import { TaskFormPage } from './features/tasks/TaskFormPage';
 import { DeleteSubjectPage } from './features/subjects/DeleteSubjectPage';
+import { SubjectDetailLayout } from './features/subjects/detail/SubjectDetailLayout';
+import {
+  SubjectNotes,
+  SubjectSettings,
+  SubjectSummary,
+  SubjectTasks,
+  SubjectTutorials,
+} from './features/subjects/detail/SubjectTabs';
 import { SubjectFormPage } from './features/subjects/SubjectFormPage';
 import { SubjectsPage } from './features/subjects/SubjectsPage';
 import { TrashPage } from './features/trash/TrashPage';
@@ -42,7 +50,18 @@ export const routes: RouteObject[] = [
               { path: 'asignaturas/nueva', element: <SubjectFormPage /> },
               { path: 'asignaturas/:id/editar', element: <SubjectFormPage /> },
               { path: 'asignaturas/:id/eliminar', element: <DeleteSubjectPage /> },
-              { path: 'asignaturas/:id/horario', element: <SlotsPage /> },
+              {
+                path: 'asignaturas/:id',
+                element: <SubjectDetailLayout />,
+                children: [
+                  { index: true, element: <SubjectSummary /> },
+                  { path: 'tareas', element: <SubjectTasks /> },
+                  { path: 'tutorias', element: <SubjectTutorials /> },
+                  { path: 'notas', element: <SubjectNotes /> },
+                  { path: 'horario', element: <SlotsPage /> },
+                  { path: 'ajustes', element: <SubjectSettings /> },
+                ],
+              },
               { path: 'pendientes/nueva', element: <TaskFormPage /> },
               { path: 'pendientes/:id', element: <TaskFormPage /> },
               { path: 'papelera', element: <TrashPage /> },
